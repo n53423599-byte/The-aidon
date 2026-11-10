@@ -1,0 +1,8 @@
+name = "the-aidon"
+compatibility_date = "2026-11-10"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "eidon_db"
+database_id = "8d940b48-a78b-473c-9b67-ef03a0b28cbc"  

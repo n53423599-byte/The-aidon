@@ -1,372 +1,1215 @@
-const app = document.getElementById("app");
-const nav = document.getElementById("mainNav");
-const menuButton = document.getElementById("menuButton");
+/* =====================================================
+   ADMIN PANEL — طبعة الآيدون الأخيرة
+===================================================== */
 
-const defaultData = {
-  settings: {
-    site_title: "طبعة الآيدون الأخيرة 🗞️ ㊗️",
-    intro: "هنا تُستودَع الذاكرةُ ما عجزت الأيامُ عن استبقائه، وتُجمع من شتات الحكاية فصولٌ كُتبت يومًا ثم مضت؛ أخبارٌ عبرت، وأقلامٌ خلّفت أثرًا، وأسماءٌ غدت جزءًا من تاريخ الآيدون㊗️.",
-    magazine_intro: "حيث تُروى أمجاد الشمَـال، وتُوثّق الأحداث، وتُسلّط الأضواء على آخر المستجـدات؛ من أخبارٍ وتقارير إلى تسريباتٍ وفعالياتٍ تخصّ مملكة الشمال♠️."
-  },
+window.AdminPanel = (() => {
+  "use strict";
 
-  leadership: [
-    { name: "كورومي 🎐", role: "قائدة الآيدون" },
-    { name: "ساسكي ⚡", role: "نائب الآيدون" },
-    { name: "فورينا 🎐", role: "مستشارة الآيدون" }
-  ],
+  const API = "/api";
 
-  journalists: [
-    "كورومي 🎐㊗️",
-    "فوريـنا 🎐",
-    "مَـاوماو 🎐",
-    "ريزي 🎐",
-    "بالالايكا 🎐",
-    "آن",
-    "هيستوريـا 🎐",
-    "ساسكي ⚡㊗️",
-    "نيـترو",
-    "ايـرزا",
-    "سيـرا 🎐",
-    "فايوليت 🎐"
-  ],
+  const state = {
+    data: null,
+    section: "profiles",
+    image: null
+  };
 
-  categories: [
-    { id: "religion", name: "قسم الدين" },
-    { id: "history", name: "قسم التاريخ" },
-    { id: "literature", name: "قسم الأدب" },
-    { id: "science", name: "قسم العلوم" },
-    { id: "clocks", name: "قسم عقارب الآيدون" }
-  ],
-
-  events: [
-    {
-      id: "astra",
-      title: "آسترا الآيدون 💫",
-      subtitle: "سماءٌ تحفظُ نجومَ حكايتها"
+  const sections = {
+    profiles: {
+      title: "الملفات الشخصية",
+      table: "profiles",
+      fields: [
+        ["name", "الاسم", "text", true],
+        ["role", "الصفة", "text"],
+        ["image_key", "الصورة", "image"],
+        ["description", "التعريف", "textarea"],
+        ["extra_info", "معلومات إضافية", "textarea"]
+      ]
     },
-    {
-      id: "chess",
-      title: "رقعة الآيدون ♟️",
-      subtitle: "إذا ما حُرّكت قطع المدى، بان الذكي من الذي يتوهّم"
+
+    journalists: {
+      title: "الصحفيون",
+      table: "journalists",
+      fields: [
+        ["name", "اسم الصحفي", "text", true],
+        ["profile_id", "الملف الشخصي", "profile"],
+        ["position", "الترتيب", "number"]
+      ]
+    },
+
+    magazine_achievements: {
+      title: "إنجازات المجلة",
+      table: "magazine_achievements",
+      fields: [
+        ["title", "الإنجاز", "text", true],
+        ["war_number", "رقم الحرب", "text"],
+        ["position", "الترتيب", "number"]
+      ]
+    },
+
+    statistics: {
+      title: "إحصائيات الآيدون",
+      table: "statistics",
+      fields: [
+        ["title", "عنوان الإحصائية", "text", true],
+        ["value", "القيمة", "text", true],
+        ["position", "الترتيب", "number"]
+      ]
+    },
+
+    archive_categories: {
+      title: "أقسام الأرشيف",
+      table: "archive_categories",
+      fields: [
+        ["name", "اسم القسم", "text", true],
+        ["slug", "الرابط المختصر", "text", true],
+        ["position", "الترتيب", "number"]
+      ]
+    },
+
+    archive_topics: {
+      title: "مواضيع الأرشيف",
+      table: "archive_topics",
+      fields: [
+        ["category_id", "القسم", "category", true],
+        ["title", "عنوان الموضوع", "text", true],
+        ["journalist_title", "صفة الكاتب", "text"],
+        ["image_key", "الصورة الرئيسية", "image"],
+        ["body", "المحتوى", "textarea", true],
+        ["position", "الترتيب", "number"]
+      ]
+    },
+
+    events: {
+      title: "فعاليات المتحف",
+      table: "events",
+      fields: [
+        ["slug", "معرّف الفعالية", "text", true],
+        ["title", "اسم الفعالية", "text", true],
+        ["subtitle", "العنوان الفرعي", "text"],
+        ["image_key", "الصورة الرئيسية", "image"],
+        ["description", "الوصف", "textarea"],
+        ["position", "الترتيب", "number"]
+      ]
+    },
+
+    event_achievements: {
+      title: "إنجازات الفعاليات",
+      table: "event_achievements",
+      fields: [
+        ["event_id", "الفعالية", "event", true],
+        ["profile_id", "صاحب الإنجاز", "profile", true],
+        ["title", "الإنجاز", "text", true],
+        ["description", "التفاصيل", "textarea"],
+        ["position", "الترتيب", "number"]
+      ]
+    },
+
+    public_results: {
+      title: "النتائج والمتوّجون",
+      table: "public_results",
+      fields: [
+        ["event_id", "الفعالية", "event", true],
+        ["title", "عنوان النتيجة", "text", true],
+        ["winner_profile_id", "الفائز", "profile", true],
+        ["description", "التفاصيل", "textarea"],
+        ["position", "الترتيب", "number"]
+      ]
     }
-  ]
-};
+  };
 
-let data = structuredClone(defaultData);
+  const $ = (selector, root = document) =>
+    root.querySelector(selector);
 
-function escapeHTML(value = "") {
-  return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  })[char]);
-}
+  const escapeHTML = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[char]);
 
-function row(title, description = "", link = "") {
-  return `
-    <a class="nav-item" href="${link}">
-      <div>
-        <h3>${escapeHTML(title)}</h3>
-        ${description ? `<p>${escapeHTML(description)}</p>` : ""}
-      </div>
-      <span class="arrow">←</span>
-    </a>
-  `;
-}
+  function notify(message, type = "info") {
+    const box = $("#admin-message");
 
-function pageHeader(title, description = "") {
-  return `
-    <a class="back-link" href="#/">← العودة للرئيسية</a>
-    <header class="page-header">
-      <div class="eyebrow">㊗️ من ذاكرة الآيدون</div>
-      <h1>${escapeHTML(title)}</h1>
-      ${description ? `<p class="intro">${escapeHTML(description)}</p>` : ""}
-    </header>
-  `;
-}
+    if (!box) {
+      alert(message);
+      return;
+    }
 
-async function loadData() {
-  try {
-    const response = await fetch("/api/public");
+    box.textContent = message;
+    box.dataset.type = type;
+    box.hidden = false;
 
-    if (response.ok) {
-      const result = await response.json();
+    clearTimeout(notify.timer);
 
-      if (result && result.settings) {
-        data = { ...data, ...result };
+    notify.timer = setTimeout(() => {
+      box.hidden = true;
+    }, 4000);
+  }
+
+  async function api(path, options = {}) {
+    const response = await fetch(`${API}${path}`, {
+      credentials: "include",
+      ...options,
+      headers: {
+        ...(options.body ? {
+          "Content-Type": "application/json"
+        } : {}),
+        ...options.headers
       }
+    });
+
+    let result = {};
+
+    try {
+      result = await response.json();
+    } catch {
+      result = {};
     }
-  } catch (error) {
-    console.warn("تعذر تحميل البيانات من الخادم حاليًا.", error);
+
+    if (!response.ok) {
+      throw new Error(
+        result.error || `حدث خطأ (${response.status})`
+      );
+    }
+
+    return result;
   }
-}
 
-function homePage() {
-  const settings = data.settings || defaultData.settings;
+  const post = (path, body) =>
+    api(path, {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
 
-  app.innerHTML = `
-    <section class="hero">
-      <div class="eyebrow">العدد الختامي · ㊗️</div>
-      <h1>${escapeHTML(settings.site_title)}</h1>
-      <p class="intro">${escapeHTML(settings.intro)}</p>
-    </section>
+  /* =========================
+     STYLES
+  ========================= */
 
-    <section>
-      <div class="section-heading">
-        <h2>أبواب الذاكرة</h2>
-        <p>ثلاثة أبواب، لكلٍّ منها حكاية.</p>
-      </div>
+  function addStyles() {
+    if ($("#admin-panel-styles")) return;
 
-      <div class="link-list">
-        ${row(
-          "مجلة الآيدون",
-          "مساحةٌ تحفظ سيرة الآيدون، ومحطّاتها وأبرز ما شهدته من أحداثٍ وتحولات، منذ البدايات حتى الفصل الأخير.",
-          "#/magazine"
-        )}
+    const style = document.createElement("style");
+    style.id = "admin-panel-styles";
 
-        ${row(
-          "أرشيف الآيدون",
-          "هنا تجتمع حصيلة أقلام الصحيفة؛ مقالاتٌ ومعارف، تنقّلت بين التاريخ والفنون والعلوم وسائر الميادين.",
-          "#/archive"
-        )}
+    style.textContent = `
+      .admin-panel {
+        direction: rtl;
+        color: #eee5d8;
+        max-width: 1100px;
+        margin: auto;
+        padding: 24px 16px 60px;
+        font-family: inherit;
+      }
 
-        ${row(
-          "متحف القمم",
-          "موضعٌ تُحفظ فيه نتائج الآسترا، وأسماء المتوّجين في رقعة الآيدون، توثيقًا للاستحقاق وصونًا لذكرى أصحاب الإنجاز.",
-          "#/museum"
-        )}
-      </div>
-    </section>
-  `;
-}
+      .admin-panel * {
+        box-sizing: border-box;
+      }
 
-function magazinePage() {
-  const leaders = data.leadership || [];
-  const journalists = data.journalists || [];
+      .admin-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+      }
 
-  app.innerHTML = `
-    ${pageHeader("مَجلـة الآيـدون㊗️", data.settings.magazine_intro)}
+      .admin-panel h1,
+      .admin-panel h2,
+      .admin-panel h3 {
+        color: #d6b17b;
+        margin-top: 0;
+      }
 
-    <div class="accordion-list">
+      .admin-panel button,
+      .admin-panel input,
+      .admin-panel textarea,
+      .admin-panel select {
+        font: inherit;
+      }
 
-      <details class="accordion">
-        <summary>تعريف المجلة</summary>
-        <div class="accordion-content">
-          <p class="intro">
-            صحيفةٌ وُجدت لتوثّق ما مرّ بالآيدون، وتجمع أخبارها وتقاريرها،
-            وتحفظ ما خلّفته أقلام كتّابها من أثر.
-          </p>
-        </div>
-      </details>
+      .admin-panel button {
+        cursor: pointer;
+      }
 
-      <details class="accordion">
-        <summary>العُليا</summary>
-        <div class="accordion-content">
-          ${leaders.map(person => `
-            <a class="person-row" href="#/profile/${encodeURIComponent(person.name)}">
-              <div>
-                <div class="person-name">${escapeHTML(person.name)}</div>
-                <div class="person-role">${escapeHTML(person.role)}</div>
-              </div>
-              <span class="arrow">←</span>
-            </a>
-          `).join("")}
-        </div>
-      </details>
+      .admin-button {
+        border: 1px solid #765b3d;
+        background: #34291f;
+        color: #f2e5d1;
+        padding: 11px 17px;
+        border-radius: 8px;
+      }
 
-      <details class="accordion">
-        <summary>الصحفيون</summary>
-        <div class="accordion-content">
-          ${journalists.map(person => `
-            <div class="person-row">
-              <div class="person-name">${escapeHTML(person.name || person)}</div>
+      .admin-button.primary {
+        background: #775638;
+        border-color: #a27b50;
+      }
+
+      .admin-button.danger {
+        background: #482b2a;
+        border-color: #80504b;
+      }
+
+      .admin-button:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+      }
+
+      .admin-layout {
+        display: grid;
+        grid-template-columns: 210px minmax(0, 1fr);
+        gap: 20px;
+        align-items: start;
+      }
+
+      .admin-nav {
+        display: grid;
+        gap: 7px;
+      }
+
+      .admin-nav button {
+        text-align: right;
+        background: #211e1a;
+        color: #d8cabb;
+        border: 1px solid #393027;
+        padding: 12px;
+        border-radius: 7px;
+      }
+
+      .admin-nav button.active {
+        border-color: #a17b50;
+        background: #392c20;
+        color: #e6c18e;
+      }
+
+      .admin-content {
+        min-width: 0;
+        background: #211e1a;
+        border: 1px solid #403329;
+        border-radius: 10px;
+        padding: 20px;
+      }
+
+      .admin-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .admin-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid #40372e;
+        background: #29241f;
+        border-radius: 8px;
+        padding: 13px;
+      }
+
+      .admin-item-main {
+        min-width: 0;
+      }
+
+      .admin-item-main strong {
+        display: block;
+        overflow-wrap: anywhere;
+      }
+
+      .admin-item small {
+        color: #ad9c87;
+      }
+
+      .admin-actions {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+
+      .admin-form {
+        display: grid;
+        gap: 15px;
+      }
+
+      .admin-field {
+        display: grid;
+        gap: 7px;
+      }
+
+      .admin-field label {
+        color: #d7bd9b;
+        font-size: 14px;
+      }
+
+      .admin-field input,
+      .admin-field textarea,
+      .admin-field select {
+        width: 100%;
+        min-width: 0;
+        background: #171513;
+        border: 1px solid #574634;
+        color: #eee5d8;
+        border-radius: 7px;
+        padding: 12px;
+        outline: none;
+      }
+
+      .admin-field input:focus,
+      .admin-field textarea:focus,
+      .admin-field select:focus {
+        border-color: #c39a67;
+      }
+
+      .admin-field textarea {
+        min-height: 150px;
+        resize: vertical;
+        line-height: 1.9;
+      }
+
+      .admin-preview {
+        max-width: 230px;
+        max-height: 180px;
+        object-fit: contain;
+        display: block;
+        border-radius: 8px;
+        border: 1px solid #574634;
+        margin-top: 10px;
+      }
+
+      .admin-message {
+        padding: 12px;
+        margin-bottom: 15px;
+        border: 1px solid #66513b;
+        background: #30271f;
+        border-radius: 8px;
+      }
+
+      .admin-message[data-type="error"] {
+        border-color: #a05c54;
+        color: #ffc4bb;
+      }
+
+      .admin-message[data-type="success"] {
+        border-color: #66856c;
+        color: #c5e4c7;
+      }
+
+      .admin-login {
+        max-width: 420px;
+        margin: 60px auto;
+        padding: 25px;
+        background: #211e1a;
+        border: 1px solid #574634;
+        border-radius: 12px;
+      }
+
+      .admin-login .admin-form {
+        margin-top: 20px;
+      }
+
+      .admin-empty {
+        text-align: center;
+        color: #aa9b88;
+        padding: 30px 10px;
+      }
+
+      .admin-form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-top: 8px;
+      }
+
+      @media (max-width: 700px) {
+        .admin-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .admin-nav {
+          display: flex;
+          overflow-x: auto;
+          padding-bottom: 8px;
+        }
+
+        .admin-nav button {
+          white-space: nowrap;
+        }
+
+        .admin-content {
+          padding: 15px;
+        }
+
+        .admin-item {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  /* =========================
+     ROOT
+  ========================= */
+
+  function getRoot() {
+    return $("#app") ||
+      $("#admin-root") ||
+      document.body;
+  }
+
+  /* =========================
+     LOGIN
+  ========================= */
+
+  function showLogin() {
+    const root = getRoot();
+
+    root.innerHTML = `
+      <section class="admin-panel">
+        <div class="admin-login">
+          <h2>إدارة طبعة الآيدون الأخيرة ㊗️</h2>
+          <p>سجّلي الدخول لمتابعة إدارة الموقع.</p>
+
+          <div id="admin-message"
+               class="admin-message"
+               hidden></div>
+
+          <form id="admin-login-form" class="admin-form">
+            <div class="admin-field">
+              <label for="admin-username">اسم المستخدم</label>
+              <input id="admin-username"
+                     name="username"
+                     autocomplete="username"
+                     required>
             </div>
-          `).join("")}
+
+            <div class="admin-field">
+              <label for="admin-password">كلمة المرور</label>
+              <input id="admin-password"
+                     name="password"
+                     type="password"
+                     autocomplete="current-password"
+                     required>
+            </div>
+
+            <button class="admin-button primary" type="submit">
+              تسجيل الدخول
+            </button>
+          </form>
         </div>
-      </details>
+      </section>
+    `;
 
-      <details class="accordion">
-        <summary>الإنجازات</summary>
-        <div class="accordion-content" id="magazineAchievements">
-          ${renderSimpleList(data.magazine_achievements)}
-        </div>
-      </details>
-
-      <details class="accordion">
-        <summary>الآيدون بالأرقام</summary>
-        <div class="accordion-content" id="statistics">
-          ${renderStatistics(data.statistics)}
-        </div>
-      </details>
-
-    </div>
-  `;
-}
-
-function renderSimpleList(items = []) {
-  if (!items || !items.length) {
-    return `<p class="empty-state">لم تُضف إنجازات بعد.</p>`;
+    $("#admin-login-form").addEventListener(
+      "submit",
+      handleLogin
+    );
   }
 
-  return items.map(item => `
-    <div class="simple-row">
-      <strong>${escapeHTML(item.title)}</strong>
-      ${item.war_number ? `<span> — ${escapeHTML(item.war_number)}</span>` : ""}
-    </div>
-  `).join("");
-}
+  async function handleLogin(event) {
+    event.preventDefault();
 
-function renderStatistics(items = []) {
-  if (!items || !items.length) {
-    return `<p class="empty-state">لا توجد إحصاءات منشورة بعد.</p>`;
+    const form = new FormData(event.currentTarget);
+
+    try {
+      await post("/login", {
+        username: form.get("username"),
+        password: form.get("password")
+      });
+
+      await loadData();
+      showDashboard();
+
+    } catch (error) {
+      notify(error.message, "error");
+    }
   }
 
-  return items.map(item => `
-    <div class="simple-row">
-      ${escapeHTML(item.title)}
-      <strong> — ${escapeHTML(item.value)}</strong>
-    </div>
-  `).join("");
-}
+  /* =========================
+     DATA
+  ========================= */
 
-function archivePage() {
-  app.innerHTML = `
-    ${pageHeader(
-      "أرشيف الآيدون",
-      "ما كتبته الأقلام لا ينتهي بانتهاء اللحظة؛ فهنا تستقرّ النصوص والمعارف في مواضعها."
-    )}
+  async function loadData() {
+    state.data = await api("/admin/data");
+  }
 
-    <div class="category-list">
-      ${(data.categories || []).map(category => `
-        <a class="category-item"
-           href="#/archive/${encodeURIComponent(category.id)}">
-          <h3>${escapeHTML(category.name)}</h3>
-          <span class="arrow">←</span>
-        </a>
+  /* =========================
+     DASHBOARD
+  ========================= */
+
+  function showDashboard() {
+    const root = getRoot();
+
+    root.innerHTML = `
+      <section class="admin-panel">
+
+        <header class="admin-top">
+          <div>
+            <h1>لوحة إدارة طبعة الآيدون الأخيرة</h1>
+            <p>إدارة محتويات الموقع وأرشيفه.</p>
+          </div>
+
+          <button class="admin-button danger"
+                  id="admin-logout">
+            تسجيل الخروج
+          </button>
+        </header>
+
+        <div id="admin-message"
+             class="admin-message"
+             hidden></div>
+
+        <div class="admin-layout">
+
+          <nav class="admin-nav" id="admin-nav">
+            ${Object.entries(sections).map(([key, section]) => `
+              <button type="button"
+                      data-section="${key}">
+                ${escapeHTML(section.title)}
+              </button>
+            `).join("")}
+
+            <button type="button"
+                    data-section="settings">
+              إعدادات الموقع
+            </button>
+          </nav>
+
+          <main class="admin-content" id="admin-content"></main>
+
+        </div>
+      </section>
+    `;
+
+    $("#admin-logout").addEventListener(
+      "click",
+      handleLogout
+    );
+
+    $("#admin-nav").addEventListener("click", event => {
+      const button = event.target.closest("[data-section]");
+
+      if (!button) return;
+
+      state.section = button.dataset.section;
+      state.image = null;
+
+      renderSection();
+    });
+
+    renderSection();
+  }
+
+  async function handleLogout() {
+    try {
+      await api("/logout", { method: "POST" });
+    } catch {}
+
+    state.data = null;
+    showLogin();
+  }
+
+  /* =========================
+     SECTION RENDERING
+  ========================= */
+
+  function renderSection() {
+    document.querySelectorAll("[data-section]").forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.section === state.section
+      );
+    });
+
+    if (state.section === "settings") {
+      renderSettings();
+      return;
+    }
+
+    const section = sections[state.section];
+
+    if (section) renderRecords(section);
+  }
+
+  function getRows(table) {
+    const map = {
+      archive_categories: "categories",
+      archive_topics: "topics"
+    };
+
+    return state.data?.[map[table] || table] || [];
+  }
+
+  function renderRecords(section) {
+    const content = $("#admin-content");
+    const rows = getRows(section.table);
+
+    content.innerHTML = `
+      <div class="admin-top">
+        <div>
+          <h2>${escapeHTML(section.title)}</h2>
+          <small>عدد العناصر: ${rows.length}</small>
+        </div>
+
+        <button class="admin-button primary"
+                id="admin-add">
+          إضافة عنصر
+        </button>
+      </div>
+
+      <div class="admin-list" id="admin-list">
+        ${rows.length ? rows.map(row => `
+          <article class="admin-item">
+            <div class="admin-item-main">
+              <strong>${escapeHTML(
+                row.title || row.name || row.value || "عنصر"
+              )}</strong>
+
+              <small>${escapeHTML(
+                row.role ||
+                row.journalist_title ||
+                row.war_number ||
+                ""
+              )}</small>
+            </div>
+
+            <div class="admin-actions">
+              <button class="admin-button"
+                      data-edit="${escapeHTML(row.id)}">
+                تعديل
+              </button>
+
+              <button class="admin-button danger"
+                      data-delete="${escapeHTML(row.id)}">
+                حذف
+              </button>
+            </div>
+          </article>
+        `).join("") : `
+          <div class="admin-empty">
+            لا توجد عناصر في هذا القسم بعد.
+          </div>
+        `}
+      </div>
+    `;
+
+    $("#admin-add").addEventListener(
+      "click",
+      () => openEditor(section, null)
+    );
+
+    $("#admin-list").addEventListener("click", event => {
+      const edit = event.target.closest("[data-edit]");
+      const remove = event.target.closest("[data-delete]");
+
+      if (edit) {
+        const record = rows.find(
+          item => String(item.id) === edit.dataset.edit
+        );
+
+        if (record) openEditor(section, record);
+      }
+
+      if (remove) {
+        const record = rows.find(
+          item => String(item.id) === remove.dataset.delete
+        );
+
+        if (record) deleteItem(section, record);
+      }
+    });
+  }
+
+  /* =========================
+     RELATION SELECTS
+  ========================= */
+
+  function relationOptions(type, selected) {
+    let rows = [];
+    let label = row => row.name;
+
+    if (type === "profile") {
+      rows = state.data.profiles || [];
+      label = row => row.name;
+    }
+
+    if (type === "category") {
+      rows = state.data.categories || [];
+      label = row => row.name;
+    }
+
+    if (type === "event") {
+      rows = state.data.events || [];
+      label = row => row.title;
+    }
+
+    return `
+      <option value="">اختاري...</option>
+      ${rows.map(row => `
+        <option value="${escapeHTML(row.id)}"
+          ${String(row.id) === String(selected) ? "selected" : ""}>
+          ${escapeHTML(label(row))}
+        </option>
       `).join("")}
-    </div>
-  `;
-}
+    `;
+  }
 
-function categoryPage(id) {
-  const category = (data.categories || []).find(item => item.id === id);
+  /* =========================
+     IMAGE HANDLING
+  ========================= */
 
-  if (!category) return notFound();
+  function fileToDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
 
-  const topics = (data.topics || [])
-    .filter(topic => topic.category_id === id);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
 
-  app.innerHTML = `
-    ${pageHeader(category.name, "من محفوظات الآيدون.")}
+      reader.readAsDataURL(file);
+    });
+  }
 
-    <div class="link-list">
-      ${topics.length ? topics.map(topic => row(
-        topic.title,
-        topic.journalist_title ? `بقلم: ${topic.journalist_title}` : "",
-        `#/topic/${encodeURIComponent(topic.id)}`
-      )).join("") : `
-        <p class="empty-state">لم تُنشر موضوعات في هذا القسم بعد.</p>
-      `}
-    </div>
-  `;
-}
+  async function compressImage(file) {
+    if (!file.type.startsWith("image/")) {
+      throw new Error("الملف المختار ليس صورة.");
+    }
 
-function topicPage(id) {
-  const topic = (data.topics || []).find(item => item.id === id);
+    const dataURL = await fileToDataURL(file);
+    const image = new Image();
 
-  if (!topic) return notFound();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = reject;
+      image.src = dataURL;
+    });
 
-  app.innerHTML = `
-    ${pageHeader(topic.title)}
+    const maxDimension = 1800;
 
-    <article class="topic">
-      ${topic.journalist_title
-        ? `<div class="byline">بقلم: ${escapeHTML(topic.journalist_title)}</div>`
-        : ""}
+    const ratio = Math.min(
+      1,
+      maxDimension / Math.max(image.width, image.height)
+    );
 
-      ${topic.image_key
-        ? `<img src="${escapeHTML(topic.image_key)}" alt="${escapeHTML(topic.title)}">`
-        : ""}
+    const canvas = document.createElement("canvas");
 
-      <div class="topic-body">${escapeHTML(topic.body)}</div>
-    </article>
-  `;
-}
+    canvas.width = Math.round(image.width * ratio);
+    canvas.height = Math.round(image.height * ratio);
 
-function museumPage() {
-  app.innerHTML = `
-    ${pageHeader(
-      "متحف القمم",
-      "للإنجاز موضعٌ في الذاكرة، ولأصحابه أسماءٌ لا ينبغي أن تغيب."
-    )}
+    canvas.getContext("2d").drawImage(
+      image,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
 
-    <div class="link-list">
-      ${(data.events || []).map(event => row(
-        event.title,
-        event.subtitle,
-        `#/event/${encodeURIComponent(event.id)}`
-      )).join("")}
-    </div>
-  `;
-}
+    let quality = 0.82;
+    let output = canvas.toDataURL("image/jpeg", quality);
 
-function eventPage(id) {
-  const event = (data.events || []).find(item => item.id === id);
+    while (
+      output.length > 4 * 1024 * 1024 &&
+      quality > 0.35
+    ) {
+      quality -= 0.1;
+      output = canvas.toDataURL("image/jpeg", quality);
+    }
 
-  if (!event) return notFound();
+    if (output.length > 4 * 1024 * 1024) {
+      throw new Error("حجم الصورة كبير جدًا.");
+    }
 
-  const achievements = (data.event_achievements || [])
-    .filter(item => item.event_id === id);
+    return {
+      data: output,
+      mime: "image/jpeg"
+    };
+  }
 
-  const results = (data.public_results || [])
-    .filter(item => item.event_id === id);
+  async function uploadImage(file) {
+    const compressed = await compressImage(file);
 
-  app.innerHTML = `
-    ${pageHeader(event.title, event.subtitle)}
+    const result = await post(
+      "/admin/upload",
+      compressed
+    );
 
-    ${event.image_key
-      ? `<img class="event-image" src="${escapeHTML(event.image_key)}" alt="${escapeHTML(event.title)}">`
-      : ""}
+    if (!result.success || !result.image_key) {
+      throw new Error("لم يتم رفع الصورة.");
+    }
 
-    ${event.description
-      ? `<p class="intro">${escapeHTML(event.description)}</p>`
-      : ""}
+    return result.image_key;
+  }
 
-    <div class="section-heading">
-      <h2>سجلّ الإنجازات</h2>
-    </div>
+  /* =========================
+     EDITOR
+  ========================= */
 
-    <div class="link-list">
-      ${achievements.length ? achievements.map(item => {
-        const profile = (data.profiles || []).find(
-          p => p.id === item.profile_id
-        );
+  function openEditor(section, record) {
+    state.image = null;
 
-        return row(
-          item.title,
-          `${profile ? profile.name : ""}${item.description ? " — " + item.description : ""}`,
-          profile ? `#/profile/${encodeURIComponent(profile.id)}` : "#"
-        );
-      }).join("") : `<p class="empty-state">لم تُضف إنجازات بعد.</p>`}
-    </div>
+    const content = $("#admin-content");
 
-    <div class="section-heading">
-      <h2>النتائج والتتويجات</h2>
-    </div>
+    const fieldsHTML = section.fields.map(field => {
+      const [name, label, type, required] = field;
+      const value = record?.[name] ?? "";
 
-    <div class="link-list">
-      ${results.length ? results.map(item => {
-        const profile = (data.profiles || []).find(
-          p => p.id === item.winner_profile_id
-        );
+      if (type === "textarea") {
+        return `
+          <div class="admin-field">
+            <label for="field-${name}">${label}</label>
+            <textarea id="field-${name}"
+                      name="${name}"
+                      ${required ? "required" : ""}>${escapeHTML(value)}</textarea>
+          </div>
+        `;
+      }
 
-        return row(
-          item.title,
-          profile ? profile.name : "",
-          profile ? `#/profile/${encodeURIComponent(profile.id)}` : "#"
-        );
+      if (["profile", "category", "event"].includes(type)) {
+        return `
+          <div class="admin-field">
+            <label for="field-${name}">${label}</label>
+            <select id="field-${name}"
+                    name="${name}"
+                    ${required ? "required" : ""}>
+              ${relationOptions(type, value)}
+            </select>
+          </div>
+        `;
+      }
+
+      if (type === "image") {
+        return `
+          <div class="admin-field">
+            <label>${label}</label>
+
+            <input type="hidden"
+                   name="${name}"
+                   id="field-${name}"
+                   value="${escapeHTML(value)}">
+
+            <input type="file"
+                   id="image-file"
+                   accept="image/*">
+
+            <div id="image-preview-area">
+              ${value ? `
+                <img class="admin-preview"
+                     src="${escapeHTML(value)}"
+                     alt="معاينة الصورة">
+              ` : ""}
+            </div>
+
+            ${section.table !== "profiles" ? `
+              <div class="admin-field">
+                <label>استخدام صورة ملف شخصي موجود</label>
+                <select id="reuse-profile-image">
+                  <option value="">اختاري صورة...</option>
+
+                  ${(state.data.profiles || [])
+                    .filter(profile => profile.image_key)
+                    .map(profile => `
+                      <option value="${escapeHTML(profile.image_key)}">
+                        ${escapeHTML(profile.name)}
+                      </option>
+                    `).join("")}
+                </select>
+              </div>
+            ` : ""}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="admin-field">
+          <label for="field-${name}">${label}</label>
+
+          <input
+            id="field-${name}"
+            name="${name}"
+            type="${type === "number" ? "number" : "text"}"
+            value="${escapeHTML(value)}"
+            ${required ? "required" : ""}
+          >
+        </div>
+      `;
+    }).join("");
+
+    content.innerHTML = `
+      <div class="admin-top">
+        <h2>${record ? "تعديل عنصر" : "إضافة عنصر جديد"}</h2>
+
+        <button class="admin-button" id="admin-back">
+          العودة
+        </button>
+      </div>
+
+      <form id="admin-editor" class="admin-form">
+        ${fieldsHTML}
+
+        <div class="admin-form-actions">
+          <button class="admin-button primary" type="submit">
+            حفظ
+          </button>
+
+          <button class="admin-button"
+                  type="button"
+                  id="admin-cancel">
+            إلغاء
+          </button>
+        </div>
+      </form>
+    `;
+
+    $("#admin-back").addEventListener("click", renderSection);
+    $("#admin-cancel").addEventListener("click", renderSection);
+
+    const imageInput = $("#image-file");
+
+    if (imageInput) {
+      imageInput.addEventListener("change", previewImage);
+    }
+
+    const reuse = $("#reuse-profile-image");
+
+    if (reuse) {
+      reuse.addEventListener("change", () => {
+        if (!reuse.value) return;
+
+        $("#field-image_key").value = reuse.value;
+
+        $("#image-preview-area").innerHTML = `
+          <img class="admin-preview"
+               src="${escapeHTML(reuse.value)}"
+               alt="معاينة الصورة">
+        `;
+
+        state.image = null;
+      });
+    }
+
+    $("#admin-editor").addEventListener(
+      "submit",
+      event => saveEditor(event, section, record)
+    );
+  }
+
+  async function previewImage(event) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const dataURL = await fileToDataURL(file);
+
+      $("#image-preview-area").innerHTML = `
+        <img class="admin-preview"
+             src="${dataURL}"
+             alt="معاينة الصورة المختارة">
+      `;
+
+      state.image = file;
+
+      if ($("#reuse-profile-image")) {
+        $("#reuse-profile-image").value = "";
+      }
+
+    } catch {
+      notify("تعذّرت معاينة الصورة.", "error");
+    }
+  }
+
+  /* =========================
+     SAVE
+  ========================= */
+
+  async function saveEditor(event, section, oldRecord) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const record = {};
+
+    for (const field of section.fields) {
+      const name = field[0];
+      const type = field[2];
+
+      if (type === "image") {
+        record[name] = $("#field-" + name).value;
+        continue;
+      }
+
+      const value = formData.get(name);
+
+      record[name] = type === "number"
+        ? (value === "" ? 0 : Number(value))
+        : value;
+    }
+
+    if (oldRecord?.id) {
+      record.id = oldRecord.id;
+    }
+
+    const button = form.querySelector(
+      'button[type="submit"]'
+    );
+
+    button.disabled = true;
+    button.textContent = "جارٍ الحفظ...";
+
+    try {
+      if (state.image) {
+        notify("جارٍ رفع الصورة...");
+
+        record.image_key = await uploadImage(state.image);
+      }
+
+      await post("/admin/save", {
+        table: section.table,
+        record
+      });
+
+      await loadData();
+
+      state.image = null;
+
+      notify("تم حفظ البيانات بنجاح.", "success");
+
+      renderSection();
+
+    } catch (error) {
+      notify(error.message, "error");
+
+      button.disabled = false;
+      button.textContent = "حفظ";
+    }
+  }
+
+  /* =========================
+     DELETE
+  ========================= */
+
+  async function deleteItem(section, record) {
+    const name = record.title || record.name || "هذا العنصر";
+
+    if (!confirm(
+      `هل تريدين حذف "${name}"؟\n\nلا يمكن التراجع عن هذه العملية.`
+    )) return;
+
+    try {
+      await post("/admin/delete", {
+        table: section.table,
+        id: record.id
+      });
+
+      await loadData();
+
+      notify("تم حذف العنصر.", "success");
+
+      renderSection();
+
+    } catch (error) {
+      notify(error.message, "error");
+    }
+  }
+
+  /* =========================
+     SETTINGS
+  ========================= */
+
+  function renderSettings() {
+    const settings = state.data?.settings || {};
+
+    $("#admin-content").innerHTML = `
+      <h2>إعدادات الموقع</h2>
+
+      <form id="admin-settings-form" class="admin-form">
+
+        <div class="admin-field">
+          <label for="setting-title">عنوان الموقع</label>
+
+          <input id="setting-title"
+                 name="site_title"
+                 value="${escapeHTML(settings.site_title || "")}">
+        </div>
+
+        <div class="admin-field">
+          <label for="setting-intro">مقدمة الصفحة الرئيسية</label>
+
+          <textarea id="setting-intro"
+                    name="intro">${escapeHTML(settings.intro || "")}</textarea>
+        </div>
+
+        <div class="admin-field">
+          <label for="setting-magazine">مقدمة المجلة</label>
+
+          <textarea id="setting-magazine"
+                    name="magazine_intro">${escapeHTML(settings.magazine_intro || "")}</textarea>
+        </div>
+
+        <button class="admin-button primary" type="submit">
+          حفظ الإعدادات
+        </button>
+
+      </form>
+    `;
+
+    $("#admin-settings-form").addEventListener(
+      "submit",
+      saveSettings
+    );
+  }
+
+  async function saveSettings(event) {
+    event.preventDefault();
+
+    const form = new FormData(event.currentTarget);
+    const values = Object.fromEntries(form.entries());
+
+    try {
+      await post("/admin/settings", values);
+      await loadData();
+
+      notify("تم حفظ الإعدادات.", "success");
+
+    } catch (error) {
+      notify(error.message, "error");
+    }
+  }
+
+  /* =========================
+     START
+  ========================= */
+
+  async function start() {
+    addStyles();
+
+    const root = getRoot();
+
+    root.innerHTML = `
+      <section class="admin-panel">
+        <div class="admin-empty">
+          جارٍ التحقق من جلسة المشرف...
+        </div>
+      </section>
+    `;
+
+    try {
+      await loadData();
+      showDashboard();
+
+    } catch {
+      showLogin();
+    }
+  }
+
+  return {
+    start,
+    reload: loadData
+  };
+
+})();      );
       }).join("") : `<p class="empty-state">لم تُضف نتائج بعد.</p>`}
     </div>
 

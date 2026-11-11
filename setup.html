@@ -1,1 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>تهيئة الإدارة | الآيدون</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: #171817;
+      color: #eee8dc;
+      font-family: Tahoma, Arial, sans-serif;
+    }
+    main {
+      width: 100%;
+      max-width: 410px;
+      padding: 30px 24px;
+      border: 1px solid #65513a;
+      border-radius: 12px;
+      background: #22231f;
+    }
+    h1 { font-size: 22px; margin: 0 0 8px; }
+    p { color: #b9ad9c; line-height: 1.8; font-size: 13px; }
+    label { display: block; margin: 18px 0 7px; font-size: 13px; }
+    input {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #51483d;
+      border-radius: 7px;
+      background: #171817;
+      color: white;
+      font-size: 16px;
+      outline: none;
+    }
+    button {
+      width: 100%;
+      margin-top: 23px;
+      padding: 14px;
+      border: 0;
+      border-radius: 7px;
+      background: #94734b;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .5; cursor: wait; }
+    #message { margin-top: 16px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>تهيئة إدارة الآيدون ㊗️</h1>
+    <p>إنشاء حساب المشرف الأول. هذه الصفحة مخصصة للتهيئة الأولية فقط.</p>
 
+    <form id="setupForm">
+      <label for="key">مفتاح التهيئة السري</label>
+      <input id="key" type="password" required autocomplete="off">
+
+      <label for="username">اسم المستخدم</label>
+      <input id="username" type="text"
+        minlength="3" maxlength="30"
+        pattern="[a-zA-Z0-9_-]+"
+        required autocomplete="username">
+
+      <label for="password">كلمة المرور</label>
+      <input id="password" type="password"
+        minlength="10" maxlength="128"
+        required autocomplete="new-password">
+
+      <button id="submit" type="submit">إنشاء حساب المشرف</button>
+    </form>
+
+    <div id="message" role="status"></div>
+  </main>
+
+  <script>
+    const form = document.getElementById("setupForm");
+    const button = document.getElementById("submit");
+    const message = document.getElementById("message");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      button.disabled = true;
+      message.textContent = "جارٍ إنشاء الحساب...";
+
+      try {
+        const response = await fetch("/api/setup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            setup_key: document.getElementById("key").value,
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "تعذّر إنشاء الحساب.");
+        }
+
+        form.reset();
+        message.textContent = "تم إنشاء حساب المشرف بنجاح. احذفي ملف setup.html الآن.";
+      } catch (error) {
+        message.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

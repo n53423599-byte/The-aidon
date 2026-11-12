@@ -1,3 +1,5 @@
+"use strict";
+
 const app = document.getElementById("app");
 const nav = document.getElementById("mainNav");
 const menuButton = document.getElementById("menuButton");
@@ -54,6 +56,8 @@ const defaultData = {
 
 let data = structuredClone(defaultData);
 
+/* أدوات مساعدة */
+
 function escapeHTML(value = "") {
   return String(value).replace(/[&<>"']/g, char => ({
     "&": "&amp;",
@@ -64,14 +68,30 @@ function escapeHTML(value = "") {
   })[char]);
 }
 
+function safeImage(value = "") {
+  const url = String(value);
+
+  if (
+    url.startsWith("/") ||
+    url.startsWith("https://") ||
+    url.startsWith("http://")
+  ) {
+    return escapeHTML(url);
+  }
+
+  return "";
+}
+
 function row(title, description = "", link = "") {
   return `
-    <a class="nav-item" href="${link}">
+    <a class="nav-item" href="${escapeHTML(link)}">
       <div>
         <h3>${escapeHTML(title)}</h3>
-        ${description ? `<p>${escapeHTML(description)}</p>` : ""}
+        ${description
+          ? `<p>${escapeHTML(description)}</p>`
+          : ""}
       </div>
-      <span class="arrow">←</span>
+      <span class="arrow" aria-hidden="true">←</span>
     </a>
   `;
 }
@@ -79,29 +99,60 @@ function row(title, description = "", link = "") {
 function pageHeader(title, description = "") {
   return `
     <a class="back-link" href="#/">← العودة للرئيسية</a>
+
     <header class="page-header">
       <div class="eyebrow">㊗️ من ذاكرة الآيدون</div>
       <h1>${escapeHTML(title)}</h1>
-      ${description ? `<p class="intro">${escapeHTML(description)}</p>` : ""}
+
+      ${description
+        ? `<p class="intro">${escapeHTML(description)}</p>`
+        : ""}
     </header>
   `;
 }
 
+function sectionHeading(title, description = "") {
+  return `
+    <div class="section-heading">
+      <h2>${escapeHTML(title)}</h2>
+      ${description
+        ? `<p>${escapeHTML(description)}</p>`
+        : ""}
+    </div>
+  `;
+}
+
+/* تحميل البيانات */
+
 async function loadData() {
   try {
-    const response = await fetch("/api/public");
+    const response = await fetch("/api/public", {
+      cache: "no-store"
+    });
 
-    if (response.ok) {
-      const result = await response.json();
-
-      if (result && result.settings) {
-        data = { ...data, ...result };
-      }
+    if (!response.ok) {
+      throw new Error("تعذر تحميل البيانات.");
     }
+
+    const result = await response.json();
+
+    if (result && result.settings) {
+      data = {
+        ...defaultData,
+        ...result,
+        settings: {
+          ...defaultData.settings,
+          ...(result.settings || {})
+        }
+      };
+    }
+
   } catch (error) {
-    console.warn("تعذر تحميل البيانات من الخادم حاليًا.", error);
+    console.warn("تعذر تحميل البيانات من الخادم:", error);
   }
 }
+
+/* الصفحة الرئيسية */
 
 function homePage() {
   const settings = data.settings || defaultData.settings;
@@ -109,20 +160,21 @@ function homePage() {
   app.innerHTML = `
     <section class="hero">
       <div class="eyebrow">العدد الختامي · ㊗️</div>
+
       <h1>${escapeHTML(settings.site_title)}</h1>
-      <p class="intro">${escapeHTML(settings.intro)}</p>
+
+      <p class="intro">
+        ${escapeHTML(settings.intro)}
+      </p>
     </section>
 
-    <section>
-      <div class="section-heading">
-        <h2>أبواب الذاكرة</h2>
-        <p>ثلاثة أبواب، لكلٍّ منها حكاية.</p>
-      </div>
+    <section class="home-destinations">
+      ${sectionHeading("أبواب الذاكرة")}
 
       <div class="link-list">
         ${row(
           "مجلة الآيدون",
-          "مساحةٌ تحفظ سيرة الآيدون، ومحطّاتها وأبرز ما شهدته من أحداثٍ وتحولات، منذ البدايات حتى الفصل الأخير.",
+          "مساحةٌ تحفظ سيرة الآيدون㊗️، ومحطّاتها وأبرز ما شهدته من أحداثٍ وتحولات، منذ البدايات حتى الفصل الأخير.",
           "#/magazine"
         )}
 
@@ -134,7 +186,7 @@ function homePage() {
 
         ${row(
           "متحف القمم",
-          "موضعٌ تُحفظ فيه نتائج الآسترا، وأسماء المتوّجين في رقعة الآيدون، توثيقًا للاستحقاق وصونًا لذكرى أصحاب الإنجاز.",
+          "موضعٌ تُحفظ فيه نتائج الآسترا💫، وأسماءُ المتوّجين في رقعة الآيدون♟️، توثيقًا للاستحقاق وصونًا لذكرى أصحاب الإنجاز.",
           "#/museum"
         )}
       </div>
@@ -142,17 +194,23 @@ function homePage() {
   `;
 }
 
+/* مجلة الآيدون */
+
 function magazinePage() {
   const leaders = data.leadership || [];
   const journalists = data.journalists || [];
 
   app.innerHTML = `
-    ${pageHeader("مَجلـة الآيـدون㊗️", data.settings.magazine_intro)}
+    ${pageHeader(
+      "مَجلـة الآيـدون㊗️",
+      data.settings.magazine_intro
+    )}
 
     <div class="accordion-list">
 
       <details class="accordion">
         <summary>تعريف المجلة</summary>
+
         <div class="accordion-content">
           <p class="intro">
             صحيفةٌ وُجدت لتوثّق ما مرّ بالآيدون، وتجمع أخبارها وتقاريرها،
@@ -163,25 +221,50 @@ function magazinePage() {
 
       <details class="accordion">
         <summary>العُليا</summary>
+
         <div class="accordion-content">
-          ${leaders.map(person => `
-            <a class="person-row" href="#/profile/${encodeURIComponent(person.name)}">
-              <div>
-                <div class="person-name">${escapeHTML(person.name)}</div>
-                <div class="person-role">${escapeHTML(person.role)}</div>
-              </div>
-              <span class="arrow">←</span>
-            </a>
-          `).join("")}
+          ${leaders.map(person => {
+            const profile = (data.profiles || []).find(
+              item => item.name === person.name ||
+                item.name === String(person.name).replace(/ 🎐| ⚡/g, "")
+            );
+
+            const profileLink = profile
+              ? `#/profile/${encodeURIComponent(profile.id)}`
+              : `#/profile/${encodeURIComponent(person.name)}`;
+
+            return `
+              <a class="person-row" href="${profileLink}">
+                ${person.image_key
+                  ? `<img src="${safeImage(person.image_key)}" alt="">`
+                  : ""}
+
+                <div>
+                  <div class="person-name">
+                    ${escapeHTML(person.name)}
+                  </div>
+
+                  <div class="person-role">
+                    ${escapeHTML(person.role)}
+                  </div>
+                </div>
+
+                <span class="arrow">←</span>
+              </a>
+            `;
+          }).join("")}
         </div>
       </details>
 
       <details class="accordion">
         <summary>الصحفيون</summary>
+
         <div class="accordion-content">
-          ${journalists.map(person => `
+          ${(journalists || []).map(person => `
             <div class="person-row">
-              <div class="person-name">${escapeHTML(person.name || person)}</div>
+              <div class="person-name">
+                ${escapeHTML(person.name || person)}
+              </div>
             </div>
           `).join("")}
         </div>
@@ -189,14 +272,16 @@ function magazinePage() {
 
       <details class="accordion">
         <summary>الإنجازات</summary>
-        <div class="accordion-content" id="magazineAchievements">
-          ${renderSimpleList(data.magazine_achievements)}
+
+        <div class="accordion-content">
+          ${renderMagazineAchievements(data.magazine_achievements)}
         </div>
       </details>
 
       <details class="accordion">
         <summary>الآيدون بالأرقام</summary>
-        <div class="accordion-content" id="statistics">
+
+        <div class="accordion-content">
           ${renderStatistics(data.statistics)}
         </div>
       </details>
@@ -205,7 +290,7 @@ function magazinePage() {
   `;
 }
 
-function renderSimpleList(items = []) {
+function renderMagazineAchievements(items = []) {
   if (!items || !items.length) {
     return `<p class="empty-state">لم تُضف إنجازات بعد.</p>`;
   }
@@ -213,7 +298,7 @@ function renderSimpleList(items = []) {
   return items.map(item => `
     <div class="simple-row">
       <strong>${escapeHTML(item.title)}</strong>
-      ${item.war_number ? `<span> — ${escapeHTML(item.war_number)}</span>` : ""}
+      <span>${escapeHTML(item.war_number || "")}</span>
     </div>
   `).join("");
 }
@@ -225,23 +310,28 @@ function renderStatistics(items = []) {
 
   return items.map(item => `
     <div class="simple-row">
-      ${escapeHTML(item.title)}
-      <strong> — ${escapeHTML(item.value)}</strong>
+      <span>${escapeHTML(item.title)}</span>
+      <strong>${escapeHTML(item.value)}</strong>
     </div>
   `).join("");
 }
 
+/* الأرشيف */
+
 function archivePage() {
+  const categories = data.categories || [];
+
   app.innerHTML = `
     ${pageHeader(
       "أرشيف الآيدون",
-      "ما كتبته الأقلام لا ينتهي بانتهاء اللحظة؛ فهنا تستقرّ النصوص والمعارف في مواضعها."
+      "هنا تجتمع حصيلة أقلام الصحيفة؛ مقالاتٌ ومعارف، تنقّلت بين التاريخ والفنون والعلوم وسائر الميادين."
     )}
 
     <div class="category-list">
-      ${(data.categories || []).map(category => `
+      ${categories.map(category => `
         <a class="category-item"
            href="#/archive/${encodeURIComponent(category.id)}">
+
           <h3>${escapeHTML(category.name)}</h3>
           <span class="arrow">←</span>
         </a>
@@ -251,49 +341,67 @@ function archivePage() {
 }
 
 function categoryPage(id) {
-  const category = (data.categories || []).find(item => item.id === id);
+  const category = (data.categories || []).find(
+    item => String(item.id) === String(id)
+  );
 
-  if (!category) return notFound();
+  if (!category) {
+    return notFound();
+  }
 
   const topics = (data.topics || [])
-    .filter(topic => topic.category_id === id);
+    .filter(topic => String(topic.category_id) === String(id));
 
   app.innerHTML = `
     ${pageHeader(category.name, "من محفوظات الآيدون.")}
 
     <div class="link-list">
-      ${topics.length ? topics.map(topic => row(
-        topic.title,
-        topic.journalist_title ? `بقلم: ${topic.journalist_title}` : "",
-        `#/topic/${encodeURIComponent(topic.id)}`
-      )).join("") : `
-        <p class="empty-state">لم تُنشر موضوعات في هذا القسم بعد.</p>
-      `}
+      ${topics.length
+        ? topics.map(topic => row(
+            topic.title,
+            topic.journalist_title
+              ? `بقلم: ${topic.journalist_title}`
+              : "",
+            `#/topic/${encodeURIComponent(topic.id)}`
+          )).join("")
+        : `<p class="empty-state">لم تُنشر موضوعات في هذا القسم بعد.</p>`
+      }
     </div>
   `;
 }
 
 function topicPage(id) {
-  const topic = (data.topics || []).find(item => item.id === id);
+  const topic = (data.topics || []).find(
+    item => String(item.id) === String(id)
+  );
 
-  if (!topic) return notFound();
+  if (!topic) {
+    return notFound();
+  }
 
   app.innerHTML = `
     ${pageHeader(topic.title)}
 
     <article class="topic">
+
       ${topic.journalist_title
         ? `<div class="byline">بقلم: ${escapeHTML(topic.journalist_title)}</div>`
         : ""}
 
       ${topic.image_key
-        ? `<img src="${escapeHTML(topic.image_key)}" alt="${escapeHTML(topic.title)}">`
+        ? `<img src="${safeImage(topic.image_key)}"
+                alt="${escapeHTML(topic.title)}">`
         : ""}
 
-      <div class="topic-body">${escapeHTML(topic.body)}</div>
+      <div class="topic-body">
+        ${escapeHTML(topic.body || "")}
+      </div>
+
     </article>
   `;
 }
+
+/* متحف القمم */
 
 function museumPage() {
   app.innerHTML = `
@@ -313,60 +421,234 @@ function museumPage() {
 }
 
 function eventPage(id) {
-  const event = (data.events || []).find(item => item.id === id);
+  const event = (data.events || []).find(
+    item => String(item.id) === String(id)
+  );
 
-  if (!event) return notFound();
+  if (!event) {
+    return notFound();
+  }
 
   const achievements = (data.event_achievements || [])
-    .filter(item => item.event_id === id);
+    .filter(item => String(item.event_id) === String(id));
 
   const results = (data.public_results || [])
-    .filter(item => item.event_id === id);
+    .filter(item => String(item.event_id) === String(id));
 
   app.innerHTML = `
     ${pageHeader(event.title, event.subtitle)}
 
     ${event.image_key
-      ? `<img class="event-image" src="${escapeHTML(event.image_key)}" alt="${escapeHTML(event.title)}">`
+      ? `<img class="event-image"
+              src="${safeImage(event.image_key)}"
+              alt="${escapeHTML(event.title)}">`
       : ""}
 
     ${event.description
       ? `<p class="intro">${escapeHTML(event.description)}</p>`
       : ""}
 
-    <div class="section-heading">
-      <h2>سجلّ الإنجازات</h2>
-    </div>
+    ${sectionHeading("سجلّ الإنجازات")}
 
     <div class="link-list">
-      ${achievements.length ? achievements.map(item => {
-        const profile = (data.profiles || []).find(
-          p => p.id === item.profile_id
-        );
+      ${achievements.length
+        ? achievements.map(item => {
+            const profile = (data.profiles || []).find(
+              person => String(person.id) === String(item.profile_id)
+            );
 
-        return row(
-          item.title,
-          `${profile ? profile.name : ""}${item.description ? " — " + item.description : ""}`,
-          profile ? `#/profile/${encodeURIComponent(profile.id)}` : "#"
-        );
-      }).join("") : `<p class="empty-state">لم تُضف إنجازات بعد.</p>`}
+            return row(
+              item.title,
+              item.description || "",
+              profile
+                ? `#/profile/${encodeURIComponent(profile.id)}`
+                : "#"
+            );
+          }).join("")
+        : `<p class="empty-state">لم تُضف إنجازات بعد.</p>`
+      }
     </div>
 
-    <div class="section-heading">
-      <h2>النتائج والتتويجات</h2>
-    </div>
+    ${sectionHeading("النتائج والتتويجات")}
 
     <div class="link-list">
-      ${results.length ? results.map(item => {
-        const profile = (data.profiles || []).find(
-          p => p.id === item.winner_profile_id
-        );
+      ${results.length
+        ? results.map(item => {
+            const profile = (data.profiles || []).find(
+              person => String(person.id) === String(item.winner_profile_id)
+            );
 
-        return row(
-          item.title,
-          profile ? profile.name : "",
-          profile ? `#/profile/${encodeURIComponent(profile.id)}` : "#"
-        );
+            return row(
+              item.title,
+              profile ? profile.name : "",
+              profile
+                ? `#/profile/${encodeURIComponent(profile.id)}`
+                : "#"
+            );
+          }).join("")
+        : `<p class="empty-state">لم تُضف نتائج بعد.</p>`
+      }
+    </div>
+
+    <a class="back-link" href="#/museum">
+      ← العودة إلى متحف القمم
+    </a>
+  `;
+}
+
+/* الملفات الشخصية */
+
+function profilePage(id) {
+  const profiles = data.profiles || [];
+
+  const profile = profiles.find(person =>
+    String(person.id) === String(id) ||
+    String(person.name) === String(id)
+  );
+
+  if (!profile) {
+    return notFound();
+  }
+
+  const achievements = (data.event_achievements || [])
+    .filter(item => String(item.profile_id) === String(profile.id));
+
+  app.innerHTML = `
+    ${pageHeader("من أصحاب الأثر")}
+
+    <div class="profile-header">
+
+      ${profile.image_key
+        ? `<img src="${safeImage(profile.image_key)}"
+                alt="${escapeHTML(profile.name)}">`
+        : ""}
+
+      <div>
+        <h2>${escapeHTML(profile.name)}</h2>
+        <p>${escapeHTML(profile.role || "")}</p>
+      </div>
+
+    </div>
+
+    ${profile.description
+      ? `<p class="profile-description">
+           ${escapeHTML(profile.description)}
+         </p>`
+      : ""}
+
+    ${profile.extra_info
+      ? `<div class="simple-row">
+           ${escapeHTML(profile.extra_info)}
+         </div>`
+      : ""}
+
+    ${sectionHeading("الإنجازات")}
+
+    <div class="link-list">
+      ${achievements.length
+        ? achievements.map(item => row(
+            item.title,
+            item.description || "",
+            "#"
+          )).join("")
+        : `<p class="empty-state">لا توجد إنجازات مسجلة.</p>`
+      }
+    </div>
+  `;
+}
+
+/* الصفحة غير الموجودة */
+
+function notFound() {
+  app.innerHTML = `
+    <div class="empty-state">
+      <h2>هذه الصفحة غير موجودة</h2>
+      <a class="back-link" href="#/">
+        العودة إلى الرئيسية
+      </a>
+    </div>
+  `;
+}
+
+/* التنقل */
+
+function render() {
+  const path = decodeURIComponent(location.hash || "#/");
+  const parts = path.replace(/^#\/?/, "").split("/").filter(Boolean);
+
+  if (parts.length === 0) {
+    homePage();
+
+  } else if (parts[0] === "magazine") {
+    magazinePage();
+
+  } else if (parts[0] === "archive" && parts.length === 1) {
+    archivePage();
+
+  } else if (parts[0] === "archive" && parts[1]) {
+    categoryPage(parts[1]);
+
+  } else if (parts[0] === "topic" && parts[1]) {
+    topicPage(parts[1]);
+
+  } else if (parts[0] === "museum") {
+    museumPage();
+
+  } else if (parts[0] === "event" && parts[1]) {
+    eventPage(parts[1]);
+
+  } else if (parts[0] === "profile" && parts[1]) {
+    profilePage(parts[1]);
+
+  } else if (parts[0] === "admin") {
+    if (
+      window.AdminPanel &&
+      typeof window.AdminPanel.start === "function"
+    ) {
+      window.AdminPanel.start();
+    } else {
+      app.innerHTML = `
+        ${pageHeader("إدارة الآيدون")}
+        <p class="notice">
+          تعذر تحميل لوحة الإدارة. تحققي من ملف admin.js.
+        </p>
+      `;
+    }
+
+    nav.classList.remove("open");
+    return;
+
+  } else {
+    notFound();
+  }
+
+  nav.querySelectorAll("a").forEach(link => {
+    link.classList.toggle(
+      "active",
+      link.getAttribute("href") === `#/${parts[0] || ""}`
+    );
+  });
+
+  nav.classList.remove("open");
+}
+
+/* القائمة */
+
+menuButton.addEventListener("click", () => {
+  const isOpen = nav.classList.toggle("open");
+  menuButton.setAttribute("aria-expanded", String(isOpen));
+});
+
+window.addEventListener("hashchange", render);
+
+/* التشغيل */
+
+async function start() {
+  await loadData();
+  render();
+}
+
+start();      );
       }).join("") : `<p class="empty-state">لم تُضف نتائج بعد.</p>`}
     </div>
 

@@ -4,21 +4,16 @@
    الآيدون | العدد الختامي
    ═══════════════════════════════════ */
 
-/* العناصر الأساسية */
-
 const app = document.getElementById("app");
 const nav = document.getElementById("mainNav");
 const menuButton = document.getElementById("menuButton");
-
 
 /* البيانات الافتراضية */
 
 const defaultData = {
   settings: {
     site_title: "طبعة الآيدون الأخيرة 🗞️ ㊗️",
-
     intro: "هنا تُستودَع الذاكرةُ ما عجزت الأيامُ عن استبقائه، وتُجمع من شتات الحكاية فصولٌ كُتبت يومًا ثم مضت؛ أخبارٌ عبرت، وأقلامٌ خلّفت أثرًا، وأسماءٌ غدت جزءًا من تاريخ الآيدون㊗️.",
-
     magazine_intro: "حيث تُروى أمجاد الشمال، وتُوثّق الأحداث، وتُسلّط الأضواء على آخر المستجدات؛ من أخبارٍ وتقارير إلى تسريباتٍ وفعالياتٍ تخصّ مملكة الشمال♠️."
   },
 
@@ -74,10 +69,7 @@ const defaultData = {
 
 let data = structuredClone(defaultData);
 
-
-/* ═══════════════════════════════════
-   أدوات مساعدة
-   ═══════════════════════════════════ */
+/* أدوات مساعدة */
 
 function escapeHTML(value = "") {
   return String(value).replace(/[&<>"']/g, char => ({
@@ -152,10 +144,7 @@ function emptyState(message) {
   return `<p class="empty-state">${escapeHTML(message)}</p>`;
 }
 
-
-/* ═══════════════════════════════════
-   تحميل البيانات
-   ═══════════════════════════════════ */
+/* تحميل البيانات */
 
 async function loadData() {
   try {
@@ -172,7 +161,6 @@ async function loadData() {
     }
 
     const result = await response.json();
-
     const settings = result.settings || {};
 
     data = {
@@ -184,10 +172,9 @@ async function loadData() {
         ...settings
       },
 
-      leadership:
-        Array.isArray(result.leadership)
-          ? result.leadership
-          : defaultData.leadership,
+      leadership: Array.isArray(result.leadership)
+        ? result.leadership
+        : defaultData.leadership,
 
       journalists:
         Array.isArray(result.journalists) &&
@@ -195,48 +182,41 @@ async function loadData() {
           ? result.journalists
           : defaultData.journalists,
 
-      categories:
-        Array.isArray(result.categories)
-          ? result.categories
-          : Array.isArray(result.archive_categories)
-            ? result.archive_categories
-            : defaultData.categories,
+      categories: Array.isArray(result.categories)
+        ? result.categories
+        : Array.isArray(result.archive_categories)
+          ? result.archive_categories
+          : defaultData.categories,
 
-      topics:
-        Array.isArray(result.topics)
-          ? result.topics
-          : Array.isArray(result.archive_topics)
-            ? result.archive_topics
-            : [],
+      topics: Array.isArray(result.topics)
+        ? result.topics
+        : Array.isArray(result.archive_topics)
+          ? result.archive_topics
+          : [],
 
       profiles: Array.isArray(result.profiles)
         ? result.profiles
         : [],
 
-      events:
-        Array.isArray(result.events)
-          ? result.events
-          : defaultData.events,
+      events: Array.isArray(result.events)
+        ? result.events
+        : defaultData.events,
 
-      magazine_achievements:
-        Array.isArray(result.magazine_achievements)
-          ? result.magazine_achievements
-          : [],
+      magazine_achievements: Array.isArray(result.magazine_achievements)
+        ? result.magazine_achievements
+        : [],
 
-      statistics:
-        Array.isArray(result.statistics)
-          ? result.statistics
-          : [],
+      statistics: Array.isArray(result.statistics)
+        ? result.statistics
+        : [],
 
-      event_achievements:
-        Array.isArray(result.event_achievements)
-          ? result.event_achievements
-          : [],
+      event_achievements: Array.isArray(result.event_achievements)
+        ? result.event_achievements
+        : [],
 
-      public_results:
-        Array.isArray(result.public_results)
-          ? result.public_results
-          : []
+      public_results: Array.isArray(result.public_results)
+        ? result.public_results
+        : []
     };
 
   } catch (error) {
@@ -244,10 +224,7 @@ async function loadData() {
   }
 }
 
-
-/* ═══════════════════════════════════
-   القيادات
-   ═══════════════════════════════════ */
+/* القيادات */
 
 function getLeadership() {
   const profiles = data.profiles || [];
@@ -261,10 +238,7 @@ function getLeadership() {
     : data.leadership;
 }
 
-
-/* ═══════════════════════════════════
-   الصفحة الرئيسية
-   ═══════════════════════════════════ */
+/* الصفحة الرئيسية */
 
 function homePage() {
   const settings = data.settings;
@@ -311,10 +285,7 @@ function homePage() {
   `;
 }
 
-
-/* ═══════════════════════════════════
-   مجلة الآيدون
-   ═══════════════════════════════════ */
+/* مجلة الآيدون */
 
 function magazinePage() {
   const leaders = getLeadership();
@@ -338,7 +309,6 @@ function magazinePage() {
           </p>
         </div>
       </details>
-
 
       <details class="accordion">
         <summary>العُليا</summary>
@@ -378,7 +348,6 @@ function magazinePage() {
         </div>
       </details>
 
-
       <details class="accordion">
         <summary>الصحفيون</summary>
 
@@ -395,7 +364,6 @@ function magazinePage() {
         </div>
       </details>
 
-
       <details class="accordion">
         <summary>الإنجازات</summary>
 
@@ -403,7 +371,6 @@ function magazinePage() {
           ${renderMagazineAchievements(data.magazine_achievements)}
         </div>
       </details>
-
 
       <details class="accordion">
         <summary>الآيدون بالأرقام</summary>
@@ -416,7 +383,6 @@ function magazinePage() {
     </div>
   `;
 }
-
 
 function renderMagazineAchievements(items = []) {
   if (!items.length) {
@@ -431,7 +397,6 @@ function renderMagazineAchievements(items = []) {
   `).join("");
 }
 
-
 function renderStatistics(items = []) {
   if (!items.length) {
     return emptyState("لا توجد إحصاءات منشورة بعد.");
@@ -445,10 +410,7 @@ function renderStatistics(items = []) {
   `).join("");
 }
 
-
-/* ═══════════════════════════════════
-   الأرشيف
-   ═══════════════════════════════════ */
+/* الأرشيف */
 
 function archivePage() {
   const categories = data.categories || [];
@@ -478,7 +440,6 @@ function archivePage() {
     </div>
   `;
 }
-
 
 function categoryPage(id) {
   const category = data.categories.find(item =>
@@ -515,7 +476,6 @@ function categoryPage(id) {
   `;
 }
 
-
 function topicPage(id) {
   const topic = data.topics.find(item =>
     String(item.id) === String(id)
@@ -548,10 +508,7 @@ function topicPage(id) {
   `;
 }
 
-
-/* ═══════════════════════════════════
-   متحف القمم
-   ═══════════════════════════════════ */
+/* متحف القمم */
 
 function museumPage() {
   app.innerHTML = `
@@ -562,7 +519,7 @@ function museumPage() {
 
     <div class="link-list">
 
-      ${data.events.map(event => row(
+      ${(data.events || []).map(event => row(
         event.title,
         event.subtitle,
         `#/event/${encodeURIComponent(event.id)}`
@@ -571,7 +528,6 @@ function museumPage() {
     </div>
   `;
 }
-
 
 function eventPage(id) {
   const event = data.events.find(item =>
@@ -657,10 +613,7 @@ function eventPage(id) {
   `;
 }
 
-
-/* ═══════════════════════════════════
-   الملفات الشخصية
-   ═══════════════════════════════════ */
+/* الملفات الشخصية */
 
 function profilePage(id) {
   const profile = data.profiles.find(person =>
@@ -723,10 +676,7 @@ function profilePage(id) {
   `;
 }
 
-
-/* ═══════════════════════════════════
-   الصفحات والتنقل
-   ═══════════════════════════════════ */
+/* الصفحات والتنقل */
 
 function notFound() {
   app.innerHTML = `
@@ -736,7 +686,6 @@ function notFound() {
     </div>
   `;
 }
-
 
 function render() {
   if (!app) return;
@@ -814,10 +763,7 @@ function render() {
   menuButton?.setAttribute("aria-expanded", "false");
 }
 
-
-/* ═══════════════════════════════════
-   القائمة الجانبية
-   ═══════════════════════════════════ */
+/* القائمة الجانبية */
 
 if (menuButton && nav) {
   menuButton.addEventListener("click", () => {
@@ -833,761 +779,7 @@ if (menuButton && nav) {
   });
 }
 
-
-/* ═══════════════════════════════════
-   تشغيل الموقع
-   ═══════════════════════════════════ */
-
-window.addEventListener("hashchange", render);
-
-async function start() {
-  await loadData();
-  render();
-}
-
-start(); =>
-    String(topic.category_id) === String(category.id)
-  );
-
-  app.innerHTML = `
-    ${pageHeader(category.name, "من محفوظات الآيدون.")}
-
-    <div class="link-list">
-
-      ${topics.length
-        ? topics.map(topic => row(
-            topic.title,
-            topic.journalist_title
-              ? `بقلم: ${topic.journalist_title}`
-              : "",
-            `#/topic/${encodeURIComponent(topic.id)}`
-          )).join("")
-
-        : `<p class="empty-state">لم تُنشر موضوعات في هذا القسم بعد.</p>`
-      }
-
-    </div>
-  `;
-}
-
-
-function topicPage(id) {
-  const topic = data.topics.find(item =>
-    String(item.id) === String(id)
-  );
-
-  if (!topic) {
-    return notFound();
-  }
-
-  app.innerHTML = `
-    ${pageHeader(topic.title)}
-
-    <article class="topic">
-
-      ${topic.journalist_title
-        ? `<div class="byline">بقلم: ${escapeHTML(topic.journalist_title)}</div>`
-        : ""}
-
-      ${topic.image_key
-        ? `<img src="${safeImage(topic.image_key)}"
-                alt="${escapeHTML(topic.title)}">`
-        : ""}
-
-      <div class="topic-body">
-        ${escapeHTML(topic.body || "").replace(/\n/g, "<br>")}
-      </div>
-
-    </article>
-  `;
-}
-
-
-/* متحف القمم */
-
-function museumPage() {
-  app.innerHTML = `
-    ${pageHeader(
-      "متحف القمم",
-      "للإنجاز موضعٌ في الذاكرة، ولأصحابه أسماءٌ لا ينبغي أن تغيب."
-    )}
-
-    <div class="link-list">
-
-      ${data.events.map(event => row(
-        event.title,
-        event.subtitle,
-        `#/event/${encodeURIComponent(event.id)}`
-      )).join("")}
-
-    </div>
-  `;
-}
-
-
-function eventPage(id) {
-  const event = data.events.find(item =>
-    String(item.id) === String(id) ||
-    String(item.slug) === String(id)
-  );
-
-  if (!event) {
-    return notFound();
-  }
-
-  const achievements = data.event_achievements.filter(item =>
-    String(item.event_id) === String(event.id)
-  );
-
-  const results = data.public_results.filter(item =>
-    String(item.event_id) === String(event.id)
-  );
-
-  app.innerHTML = `
-    ${pageHeader(event.title, event.subtitle)}
-
-    ${event.image_key
-      ? `<img class="event-image"
-              src="${safeImage(event.image_key)}"
-              alt="${escapeHTML(event.title)}">`
-      : ""}
-
-    ${event.description
-      ? `<p class="intro">${escapeHTML(event.description)}</p>`
-      : ""}
-
-
-    ${sectionHeading("سجلّ الإنجازات")}
-
-    <div class="link-list">
-
-      ${achievements.length
-        ? achievements.map(item => {
-
-            const profileId = item.profile_id || item.winner_profile_id;
-
-            const profile = data.profiles.find(person =>
-              String(person.id) === String(profileId)
-            );
-
-            return row(
-              item.title,
-              item.description || "",
-              profile
-                ? getProfileLink(profile)
-                : "#"
-            );
-
-          }).join("")
-
-        : `<p class="empty-state">لم تُضف إنجازات بعد.</p>`
-      }
-
-    </div>
-
-
-    ${sectionHeading("النتائج والتتويجات")}
-
-    <div class="link-list">
-
-      ${results.length
-        ? results.map(item => {
-
-            const profileId = item.winner_profile_id || item.profile_id;
-
-            const profile = data.profiles.find(person =>
-              String(person.id) === String(profileId)
-            );
-
-            return row(
-              item.title,
-              profile ? profile.name : "",
-              profile
-                ? getProfileLink(profile)
-                : "#"
-            );
-
-          }).join("")
-
-        : `<p class="empty-state">لم تُضف نتائج بعد.</p>`
-      }
-
-    </div>
-
-    <a class="back-link" href="#/museum">
-      ← العودة إلى متحف القمم
-    </a>
-  `;
-}
-
-
-/* الملفات الشخصية */
-
-function profilePage(id) {
-  const profile = data.profiles.find(person =>
-    String(person.id) === String(id) ||
-    String(person.name) === String(id)
-  );
-
-  if (!profile) {
-    return notFound();
-  }
-
-  const achievements = data.event_achievements.filter(item =>
-    String(item.profile_id) === String(profile.id)
-  );
-
-  const results = data.public_results.filter(item =>
-    String(item.winner_profile_id || item.profile_id) === String(profile.id)
-  );
-
-  app.innerHTML = `
-    ${pageHeader("من أصحاب الأثر")}
-
-    <div class="profile-header">
-
-      ${profile.image_key
-        ? `<img src="${safeImage(profile.image_key)}"
-                alt="${escapeHTML(profile.name)}">`
-        : ""}
-
-      <div>
-
-        <h2>${escapeHTML(profile.name)}</h2>
-
-        <p>${escapeHTML(profile.role || "")}</p>
-
-      </div>
-
-    </div>
-
-
-    ${profile.description
-      ? `<p class="profile-description">
-           ${escapeHTML(profile.description)}
-         </p>`
-      : ""}
-
-
-    ${profile.extra_info
-      ? `<div class="simple-row">
-           ${escapeHTML(profile.extra_info)}
-         </div>`
-      : ""}
-
-
-    ${sectionHeading("الإنجازات")}
-
-    <div class="link-list">
-
-      ${achievements.length
-        ? achievements.map(item => row(
-            item.title,
-            item.description || "",
-            "#"
-          )).join("")
-
-        : results.length
-          ? results.map(item => row(
-              item.title,
-              item.description || "",
-              "#"
-            )).join("")
-
-          : `<p class="empty-state">لا توجد إنجازات مسجلة.</p>`
-      }
-
-    </div>
-  `;
-}
-
-
-/* الصفحة غير الموجودة */
-
-function notFound() {
-  app.innerHTML = `
-    <div class="empty-state">
-
-      <h2>هذه الصفحة غير موجودة</h2>
-
-      <a class="back-link" href="#/">
-        العودة إلى الرئيسية
-      </a>
-
-    </div>
-  `;
-}
-
-
-/* التنقل */
-
-function render() {
-  let path = location.hash || "#/";
-
-  try {
-    path = decodeURIComponent(path);
-  } catch (error) {
-    path = "#/";
-  }
-
-  const parts = path
-    .replace(/^#\/?/, "")
-    .split("/")
-    .filter(Boolean);
-
-  if (parts.length === 0) {
-    homePage();
-
-  } else if (parts[0] === "magazine") {
-    magazinePage();
-
-  } else if (parts[0] === "archive" && parts.length === 1) {
-    archivePage();
-
-  } else if (parts[0] === "archive" && parts[1]) {
-    categoryPage(parts[1]);
-
-  } else if (parts[0] === "topic" && parts[1]) {
-    topicPage(parts[1]);
-
-  } else if (parts[0] === "museum") {
-    museumPage();
-
-  } else if (parts[0] === "event" && parts[1]) {
-    eventPage(parts[1]);
-
-  } else if (parts[0] === "profile" && parts[1]) {
-    profilePage(parts[1]);
-
-  } else if (parts[0] === "admin") {
-
-    if (
-      window.AdminPanel &&
-      typeof window.AdminPanel.start === "function"
-    ) {
-      window.AdminPanel.start();
-
-    } else {
-      app.innerHTML = `
-        ${pageHeader("إدارة الآيدون")}
-
-        <p class="notice">
-          تعذر تحميل لوحة الإدارة. تحققي من ملف admin.js.
-        </p>
-      `;
-    }
-
-    if (nav) {
-      nav.classList.remove("open");
-    }
-
-    return;
-
-  } else {
-    notFound();
-  }
-
-  if (nav) {
-    nav.querySelectorAll("a").forEach(link => {
-      link.classList.toggle(
-        "active",
-        link.getAttribute("href") === `#/${parts[0] || ""}`
-      );
-    });
-
-    nav.classList.remove("open");
-  }
-}
-
-
-/* القائمة */
-
-if (menuButton && nav) {
-  menuButton.addEventListener("click", () => {
-    const isOpen = nav.classList.toggle("open");
-
-    menuButton.setAttribute(
-      "aria-expanded",
-      String(isOpen)
-    );
-  });
-}
-
-
-/* مراقبة التنقل */
-
-window.addEventListener("hashchange", render);
-
-
 /* تشغيل الموقع */
-
-async function start() {
-  await loadData();
-  render();
-}
-
-start();nt.id)}`
-      )).join("")}
-    </div>
-  `;
-}
-
-function eventPage(id) {
-  const event = (data.events || []).find(
-    item => String(item.id) === String(id)
-  );
-
-  if (!event) {
-    return notFound();
-  }
-
-  const achievements = (data.event_achievements || [])
-    .filter(item => String(item.event_id) === String(id));
-
-  const results = (data.public_results || [])
-    .filter(item => String(item.event_id) === String(id));
-
-  app.innerHTML = `
-    ${pageHeader(event.title, event.subtitle)}
-
-    ${event.image_key
-      ? `<img class="event-image"
-              src="${safeImage(event.image_key)}"
-              alt="${escapeHTML(event.title)}">`
-      : ""}
-
-    ${event.description
-      ? `<p class="intro">${escapeHTML(event.description)}</p>`
-      : ""}
-
-    ${sectionHeading("سجلّ الإنجازات")}
-
-    <div class="link-list">
-      ${achievements.length
-        ? achievements.map(item => {
-            const profile = (data.profiles || []).find(
-              person => String(person.id) === String(item.profile_id)
-            );
-
-            return row(
-              item.title,
-              item.description || "",
-              profile
-                ? `#/profile/${encodeURIComponent(profile.id)}`
-                : "#"
-            );
-          }).join("")
-        : `<p class="empty-state">لم تُضف إنجازات بعد.</p>`
-      }
-    </div>
-
-    ${sectionHeading("النتائج والتتويجات")}
-
-    <div class="link-list">
-      ${results.length
-        ? results.map(item => {
-            const profile = (data.profiles || []).find(
-              person => String(person.id) === String(item.winner_profile_id)
-            );
-
-            return row(
-              item.title,
-              profile ? profile.name : "",
-              profile
-                ? `#/profile/${encodeURIComponent(profile.id)}`
-                : "#"
-            );
-          }).join("")
-        : `<p class="empty-state">لم تُضف نتائج بعد.</p>`
-      }
-    </div>
-
-    <a class="back-link" href="#/museum">
-      ← العودة إلى متحف القمم
-    </a>
-  `;
-}
-
-/* الملفات الشخصية */
-
-function profilePage(id) {
-  const profiles = data.profiles || [];
-
-  const profile = profiles.find(person =>
-    String(person.id) === String(id) ||
-    String(person.name) === String(id)
-  );
-
-  if (!profile) {
-    return notFound();
-  }
-
-  const achievements = (data.event_achievements || [])
-    .filter(item => String(item.profile_id) === String(profile.id));
-
-  app.innerHTML = `
-    ${pageHeader("من أصحاب الأثر")}
-
-    <div class="profile-header">
-
-      ${profile.image_key
-        ? `<img src="${safeImage(profile.image_key)}"
-                alt="${escapeHTML(profile.name)}">`
-        : ""}
-
-      <div>
-        <h2>${escapeHTML(profile.name)}</h2>
-        <p>${escapeHTML(profile.role || "")}</p>
-      </div>
-
-    </div>
-
-    ${profile.description
-      ? `<p class="profile-description">
-           ${escapeHTML(profile.description)}
-         </p>`
-      : ""}
-
-    ${profile.extra_info
-      ? `<div class="simple-row">
-           ${escapeHTML(profile.extra_info)}
-         </div>`
-      : ""}
-
-    ${sectionHeading("الإنجازات")}
-
-    <div class="link-list">
-      ${achievements.length
-        ? achievements.map(item => row(
-            item.title,
-            item.description || "",
-            "#"
-          )).join("")
-        : `<p class="empty-state">لا توجد إنجازات مسجلة.</p>`
-      }
-    </div>
-  `;
-}
-
-/* الصفحة غير الموجودة */
-
-function notFound() {
-  app.innerHTML = `
-    <div class="empty-state">
-      <h2>هذه الصفحة غير موجودة</h2>
-      <a class="back-link" href="#/">
-        العودة إلى الرئيسية
-      </a>
-    </div>
-  `;
-}
-
-/* التنقل */
-
-function render() {
-  const path = decodeURIComponent(location.hash || "#/");
-  const parts = path.replace(/^#\/?/, "").split("/").filter(Boolean);
-
-  if (parts.length === 0) {
-    homePage();
-
-  } else if (parts[0] === "magazine") {
-    magazinePage();
-
-  } else if (parts[0] === "archive" && parts.length === 1) {
-    archivePage();
-
-  } else if (parts[0] === "archive" && parts[1]) {
-    categoryPage(parts[1]);
-
-  } else if (parts[0] === "topic" && parts[1]) {
-    topicPage(parts[1]);
-
-  } else if (parts[0] === "museum") {
-    museumPage();
-
-  } else if (parts[0] === "event" && parts[1]) {
-    eventPage(parts[1]);
-
-  } else if (parts[0] === "profile" && parts[1]) {
-    profilePage(parts[1]);
-
-  } else if (parts[0] === "admin") {
-    if (
-      window.AdminPanel &&
-      typeof window.AdminPanel.start === "function"
-    ) {
-      window.AdminPanel.start();
-    } else {
-      app.innerHTML = `
-        ${pageHeader("إدارة الآيدون")}
-        <p class="notice">
-          تعذر تحميل لوحة الإدارة. تحققي من ملف admin.js.
-        </p>
-      `;
-    }
-
-    nav.classList.remove("open");
-    return;
-
-  } else {
-    notFound();
-  }
-
-  nav.querySelectorAll("a").forEach(link => {
-    link.classList.toggle(
-      "active",
-      link.getAttribute("href") === `#/${parts[0] || ""}`
-    );
-  });
-
-  nav.classList.remove("open");
-}
-
-/* القائمة */
-
-menuButton.addEventListener("click", () => {
-  const isOpen = nav.classList.toggle("open");
-  menuButton.setAttribute("aria-expanded", String(isOpen));
-});
-
-window.addEventListener("hashchange", render);
-
-/* التشغيل */
-
-async function start() {
-  await loadData();
-  render();
-}
-
-start();      );
-      }).join("") : `<p class="empty-state">لم تُضف نتائج بعد.</p>`}
-    </div>
-
-    <a class="back-link" href="#/museum">← العودة إلى متحف القمم</a>
-  `;
-}
-
-function profilePage(id) {
-  const profiles = data.profiles || [];
-
-  const profile = profiles.find(person =>
-    person.id === id || person.name === id
-  );
-
-  if (!profile) return notFound();
-
-  const achievements = (data.event_achievements || [])
-    .filter(item => item.profile_id === profile.id);
-
-  app.innerHTML = `
-    ${pageHeader("من أصحاب الأثر")}
-
-    <div class="profile-header">
-      ${profile.image_key
-        ? `<img src="${escapeHTML(profile.image_key)}" alt="${escapeHTML(profile.name)}">`
-        : ""}
-
-      <div>
-        <h2>${escapeHTML(profile.name)}</h2>
-        <p>${escapeHTML(profile.role || "")}</p>
-      </div>
-    </div>
-
-    ${profile.description
-      ? `<div class="section-heading"><p>${escapeHTML(profile.description)}</p></div>`
-      : ""}
-
-    ${profile.extra_info
-      ? `<div class="simple-row">${escapeHTML(profile.extra_info)}</div>`
-      : ""}
-
-    <div class="section-heading">
-      <h2>الإنجازات</h2>
-    </div>
-
-    <div class="link-list">
-      ${achievements.length ? achievements.map(item => row(
-        item.title,
-        item.description || "",
-        "#"
-      )).join("") : `<p class="empty-state">لا توجد إنجازات مسجلة.</p>`}
-    </div>
-  `;
-}
-
-function notFound() {
-  app.innerHTML = `
-    <div class="empty-state">
-      <h2>هذه الصفحة غير موجودة</h2>
-      <a class="back-link" href="#/">العودة إلى الرئيسية</a>
-    </div>
-  `;
-}
-
-function render() {
-  const path = decodeURIComponent(location.hash || "#/");
-  const parts = path.replace(/^#\/?/, "").split("/").filter(Boolean);
-
-  if (parts.length === 0) {
-    homePage();
-
-  } else if (parts[0] === "magazine") {
-    magazinePage();
-
-  } else if (parts[0] === "archive" && parts.length === 1) {
-    archivePage();
-
-  } else if (parts[0] === "archive" && parts[1]) {
-    categoryPage(parts[1]);
-
-  } else if (parts[0] === "topic" && parts[1]) {
-    topicPage(parts[1]);
-
-  } else if (parts[0] === "museum") {
-    museumPage();
-
-  } else if (parts[0] === "event" && parts[1]) {
-    eventPage(parts[1]);
-
-  } else if (parts[0] === "profile" && parts[1]) {
-    profilePage(parts[1]);
-
-  } else if (parts[0] === "admin") {
-    if (
-      window.AdminPanel &&
-      typeof window.AdminPanel.start === "function"
-    ) {
-      window.AdminPanel.start();
-    } else {
-      app.innerHTML = `
-        ${pageHeader("إدارة الآيدون")}
-        <p class="notice">
-          تعذر تحميل لوحة الإدارة. تحققي من ملف admin.js.
-        </p>
-      `;
-    }
-
-    nav.classList.remove("open");
-    return;
-
-  } else {
-    notFound();
-  }
-
-  nav.querySelectorAll("a").forEach(link => {
-    link.classList.toggle(
-      "active",
-      link.getAttribute("href") === `#/${parts[0] || ""}`
-    );
-  });
-
-  nav.classList.remove("open");
-}
-
-menuButton.addEventListener("click", () => {
-  nav.classList.toggle("open");
-});
 
 window.addEventListener("hashchange", render);
 

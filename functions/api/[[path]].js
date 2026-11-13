@@ -9,17 +9,27 @@ const TABLES = {
   magazine_achievements: ["id", "title", "war_number", "position"],
   statistics: ["id", "title", "value", "position"],
   archive_categories: ["id", "name", "slug", "position"],
+
   archive_topics: [
-    "id", "category_id", "title", "journalist_title",
-    "image_key", "body", "position"
+    "id",
+    "category_id",
+    "title",
+    "journalist_title",
+    "journalist_profile_id",
+    "image_key",
+    "body",
+    "position"
   ],
+
   events: [
     "id", "slug", "title", "subtitle", "image_key",
     "description", "position"
   ],
+
   event_achievements: [
     "id", "event_id", "profile_id", "title", "description", "position"
   ],
+
   public_results: [
     "id", "event_id", "title", "winner_profile_id",
     "description", "position"
@@ -928,8 +938,6 @@ export async function onRequest(context) {
       }, 401);
     }
 
-    /* ADMIN IDENTITY */
-
     if (
       method === "GET" &&
       path === "/api/admin/check"
@@ -940,8 +948,6 @@ export async function onRequest(context) {
         is_owner: isOwner(admin)
       });
     }
-
-    /* MANAGERS — OWNER ONLY */
 
     if (
       method === "GET" &&
@@ -971,8 +977,6 @@ export async function onRequest(context) {
     ) {
       return await deleteManager(request, env, admin);
     }
-
-    /* CONTENT MANAGEMENT */
 
     if (
       method === "GET" &&

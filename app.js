@@ -140,6 +140,35 @@ function getProfileLink(profile) {
   return `#/profile/${encodeURIComponent(profile.id)}`;
 }
 
+function getTopicLink(topic) {
+  return `#/topic/${encodeURIComponent(topic.id)}`;
+}
+
+function getEventLink(event) {
+  return `#/event/${encodeURIComponent(event.id || event.slug)}`;
+}
+
+function findProfile(id) {
+  if (id === undefined || id === null || id === "") {
+    return null;
+  }
+
+  return data.profiles.find(profile =>
+    String(profile.id) === String(id)
+  ) || null;
+}
+
+function findEvent(id) {
+  if (id === undefined || id === null || id === "") {
+    return null;
+  }
+
+  return data.events.find(event =>
+    String(event.id) === String(id) ||
+    String(event.slug) === String(id)
+  ) || null;
+}
+
 function emptyState(message) {
   return `<p class="empty-state">${escapeHTML(message)}</p>`;
 }
@@ -336,13 +365,23 @@ function magazinePage() {
       <details class="accordion">
         <summary>الصحفيون</summary>
         <div class="accordion-content">
-          ${journalists.map(person => `
-            <div class="person-row">
+          ${journalists.map(person => {
+            const profile = findProfile(person.profile_id);
+
+            const name = person.name || person;
+            const content = `
               <div class="person-name">
-                ${escapeHTML(person.name || person)}
+                ${escapeHTML(name)}
               </div>
-            </div>
-          `).join("")}
+              ${person.position !== undefined
+                ? `<div class="person-role">${escapeHTML(person.position)}</div>`
+                : ""}
+            `;
+
+            return profile
+              ? `<a class="person-row" href="${getProfileLink(profile)}">${content}<span class="arrow">←</span></a>`
+              : `<div class="person-row">${content}</div>`;
+          }).join("")}
         </div>
       </details>
 
@@ -436,15 +475,55 @@ function categoryPage(id) {
 
     <div class="link-list">
       ${topics.length
-        ? topics.map(topic => row(
-            topic.title,
-            topic.journalist_title ? `بقلم: ${topic.journalist_title}` : "",
-            `#/topic/${encodeURIComponent(topic.id)}`
-          )).join("")
+        ? topics.map(topic => {
+            const profile = findProfile(topic.journalist_profile_id);
+
+            const description = profile
+              ? `بقلم: ${profile.name}`
+              : topic.journalist_title
+                ? `بقلم: ${topic.journalist_title}`
+                : "";
+
+            return row(
+              topic.title,
+              description,
+              getTopicLink(topic)
+            );
+          }).join("")
         : emptyState("لم تُنشر موضوعات في هذا القسم بعد.")
       }
     </div>
   `;
+
+  topics.forEach(topic => {
+    const profile = findProfile(topic.journalist_profile_id);
+
+    if (!profile) return;
+
+    const links = app.querySelectorAll(
+      `.nav-item[href="${getTopicLink(topic)}"]`
+    );
+
+    links.forEach(link => {
+      const description = link.querySelector("p");
+
+      if (!description) return;
+
+      description.innerHTML = `
+        بقلم:
+        <a href="${escapeHTML(getProfileLink(profile))}"
+           class="inline-profile-link">
+          ${escapeHTML(profile.name)}
+        </a>
+      `;
+
+      const profileLink = description.querySelector("a");
+
+      profileLink.addEventListener("click", event => {
+        event.stopPropagation();
+      });
+    });
+  });
 }
 
 function topicPage(id) {
@@ -457,13 +536,27 @@ function topicPage(id) {
     return;
   }
 
+  const profile = findProfile(topic.journalist_profile_id);
+
+  const byline = profile
+    ? `
+      <div class="byline">
+        بقلم:
+        <a href="${escapeHTML(getProfileLink(profile))}"
+           class="inline-profile-link">
+          ${escapeHTML(profile.name)}
+        </a>
+      </div>
+    `
+    : topic.journalist_title
+      ? `<div class="byline">بقلم: ${escapeHTML(topic.journalist_title)}</div>`
+      : "";
+
   app.innerHTML = `
     ${pageHeader(topic.title)}
 
     <article class="topic">
-      ${topic.journalist_title
-        ? `<div class="byline">بقلم: ${escapeHTML(topic.journalist_title)}</div>`
-        : ""}
+      ${byline}
 
       ${topic.image_key
         ? `<img src="${safeImage(topic.image_key)}"
@@ -490,17 +583,14 @@ function museumPage() {
       ${(data.events || []).map(event => row(
         event.title,
         event.subtitle,
-        `#/event/${encodeURIComponent(event.id || event.slug)}`
+        getEventLink(event)
       )).join("")}
     </div>
   `;
 }
 
 function eventPage(id) {
-  const event = data.events.find(item =>
-    String(item.id) === String(id) ||
-    String(item.slug) === String(id)
-  );
+  const event = findEvent(id);
 
   if (!event) {
     notFound();
@@ -533,16 +623,12 @@ function eventPage(id) {
     <div class="link-list">
       ${achievements.length
         ? achievements.map(item => {
-            const profileId = item.profile_id || item.winner_profile_id;
-
-            const profile = data.profiles.find(person =>
-              String(person.id) === String(profileId)
-            );
+            const profile = findProfile(item.profile_id);
 
             return row(
               item.title,
               item.description || "",
-              profile ? getProfileLink(profile) : "#"
+              profile ? getProfileLink(profile) : getEventLink(event)
             );
           }).join("")
         : emptyState("لم تُضف إنجازات بعد.")
@@ -554,16 +640,14 @@ function eventPage(id) {
     <div class="link-list">
       ${results.length
         ? results.map(item => {
-            const profileId = item.winner_profile_id || item.profile_id;
-
-            const profile = data.profiles.find(person =>
-              String(person.id) === String(profileId)
+            const profile = findProfile(
+              item.winner_profile_id || item.profile_id
             );
 
             return row(
               item.title,
-              profile ? profile.name : "",
-              profile ? getProfileLink(profile) : "#"
+              profile ? profile.name : item.description || "",
+              profile ? getProfileLink(profile) : getEventLink(event)
             );
           }).join("")
         : emptyState("لم تُضف نتائج بعد.")
@@ -589,8 +673,22 @@ function profilePage(id) {
     return;
   }
 
+  /* المواضيع التي كتبها صاحب الملف */
+
+  const authoredTopics = data.topics.filter(topic =>
+    String(topic.journalist_profile_id) === String(profile.id)
+  );
+
+  /* إنجازاته */
+
   const achievements = data.event_achievements.filter(item =>
     String(item.profile_id) === String(profile.id)
+  );
+
+  /* نتائجه وتتويجاته */
+
+  const results = data.public_results.filter(item =>
+    String(item.winner_profile_id || item.profile_id) === String(profile.id)
   );
 
   app.innerHTML = `
@@ -618,16 +716,56 @@ function profilePage(id) {
       ? `<div class="simple-row">${escapeHTML(profile.extra_info)}</div>`
       : ""}
 
+    ${sectionHeading("الأعمال المنشورة")}
+
+    <div class="link-list">
+      ${authoredTopics.length
+        ? authoredTopics.map(topic => {
+            const category = data.categories.find(item =>
+              String(item.id) === String(topic.category_id)
+            );
+
+            return row(
+              topic.title,
+              category ? category.name || category.title : "",
+              getTopicLink(topic)
+            );
+          }).join("")
+        : emptyState("لا توجد أعمال منشورة مرتبطة بهذا الملف.")
+      }
+    </div>
+
     ${sectionHeading("الإنجازات")}
 
     <div class="link-list">
       ${achievements.length
-        ? achievements.map(item => row(
-            item.title,
-            item.description || "",
-            "#"
-          )).join("")
+        ? achievements.map(item => {
+            const event = findEvent(item.event_id);
+
+            return row(
+              item.title,
+              item.description || (event ? event.title : ""),
+              event ? getEventLink(event) : getProfileLink(profile)
+            );
+          }).join("")
         : emptyState("لا توجد إنجازات مسجلة.")
+      }
+    </div>
+
+    ${sectionHeading("النتائج والتتويجات")}
+
+    <div class="link-list">
+      ${results.length
+        ? results.map(item => {
+            const event = findEvent(item.event_id);
+
+            return row(
+              item.title,
+              item.description || (event ? event.title : ""),
+              event ? getEventLink(event) : getProfileLink(profile)
+            );
+          }).join("")
+        : emptyState("لا توجد نتائج أو تتويجات مسجلة.")
       }
     </div>
   `;
@@ -747,7 +885,7 @@ if (menuButton && nav) {
   });
 }
 
-/* تشغيل الموقع - النسخة المعدّلة */
+/* تشغيل الموقع */
 
 window.addEventListener("hashchange", render);
 

@@ -145,8 +145,12 @@ window.AdminPanel = (() => {
 
     notify.timer = setTimeout(() => {
       box.hidden = true;
-    }, 4000);
+    }, 7000);
   }
+
+  /* =========================
+     API
+  ========================= */
 
   async function api(path, options = {}) {
     const response = await fetch(`${API}${path}`, {
@@ -169,8 +173,14 @@ window.AdminPanel = (() => {
     }
 
     if (!response.ok) {
+      const message = [
+        result.error,
+        result.details,
+        `رمز الخطأ: ${response.status}`
+      ].filter(Boolean).join(" — ");
+
       throw new Error(
-        result.error || `حدث خطأ (${response.status})`
+        message || "حدث خطأ غير معروف أثناء الاتصال بالخادم."
       );
     }
 
@@ -383,6 +393,8 @@ window.AdminPanel = (() => {
         border: 1px solid #66513b;
         background: #30271f;
         border-radius: 8px;
+        overflow-wrap: anywhere;
+        line-height: 1.8;
       }
 
       .admin-message[data-type="error"] {
@@ -828,6 +840,8 @@ window.AdminPanel = (() => {
   }
 
   async function uploadImage(file) {
+    notify("جارٍ تجهيز الصورة ورفعها إلى GitHub...");
+
     const compressed = await compressImage(file);
 
     const result = await post(
@@ -836,7 +850,11 @@ window.AdminPanel = (() => {
     );
 
     if (!result.success || !result.image_key) {
-      throw new Error("لم يتم رفع الصورة.");
+      throw new Error(
+        result.error ||
+        result.details ||
+        "لم يتم رفع الصورة إلى GitHub."
+      );
     }
 
     return result.image_key;
@@ -1060,8 +1078,6 @@ window.AdminPanel = (() => {
 
     try {
       if (state.image) {
-        notify("جارٍ رفع الصورة...");
-
         record.image_key = await uploadImage(state.image);
       }
 

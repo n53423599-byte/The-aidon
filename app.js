@@ -85,11 +85,23 @@ function safeImage(value = "") {
   const url = String(value).trim();
 
   if (
-    url.startsWith("/") ||
-    url.startsWith("https://") ||
-    url.startsWith("http://")
+    url.startsWith("/") &&
+    !url.startsWith("//")
   ) {
     return escapeHTML(url);
+  }
+
+  try {
+    const parsed = new URL(url);
+
+    if (
+      parsed.protocol === "https:" ||
+      parsed.protocol === "http:"
+    ) {
+      return escapeHTML(url);
+    }
+  } catch {
+    return "";
   }
 
   return "";
@@ -144,6 +156,16 @@ function emptyState(message) {
   return `<p class="empty-state">${escapeHTML(message)}</p>`;
 }
 
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function nonEmptyValue(value, fallback) {
+  return typeof value === "string" && value.trim()
+    ? value
+    : fallback;
+}
+
 /* تحميل البيانات */
 
 async function loadData() {
@@ -161,6 +183,11 @@ async function loadData() {
     }
 
     const result = await response.json();
+
+    if (!result || typeof result !== "object") {
+      throw new Error("Invalid API response");
+    }
+
     const settings = result.settings || {};
 
     data = {
@@ -169,58 +196,68 @@ async function loadData() {
 
       settings: {
         ...defaultData.settings,
-        ...settings
+        ...settings,
+
+        site_title: nonEmptyValue(
+          settings.site_title,
+          defaultData.settings.site_title
+        ),
+
+        intro: nonEmptyValue(
+          settings.intro,
+          defaultData.settings.intro
+        ),
+
+        magazine_intro: nonEmptyValue(
+          settings.magazine_intro,
+          defaultData.settings.magazine_intro
+        )
       },
 
-      leadership: Array.isArray(result.leadership)
-        ? result.leadership
-        : defaultData.leadership,
+      leadership:
+        asArray(result.leadership).length
+          ? result.leadership
+          : defaultData.leadership,
 
       journalists:
-        Array.isArray(result.journalists) &&
-        result.journalists.length
+        asArray(result.journalists).length
           ? result.journalists
           : defaultData.journalists,
 
-      categories: Array.isArray(result.categories)
-        ? result.categories
-        : Array.isArray(result.archive_categories)
-          ? result.archive_categories
-          : defaultData.categories,
+      categories:
+        asArray(result.categories).length
+          ? result.categories
+          : asArray(result.archive_categories).length
+            ? result.archive_categories
+            : defaultData.categories,
 
-      topics: Array.isArray(result.topics)
+      topics: asArray(result.topics).length
         ? result.topics
-        : Array.isArray(result.archive_topics)
-          ? result.archive_topics
-          : [],
+        : asArray(result.archive_topics),
 
-      profiles: Array.isArray(result.profiles)
-        ? result.profiles
-        : [],
+      profiles: asArray(result.profiles),
 
-      events: Array.isArray(result.events)
+      events: asArray(result.events).length
         ? result.events
         : defaultData.events,
 
-      magazine_achievements: Array.isArray(result.magazine_achievements)
-        ? result.magazine_achievements
-        : [],
+      magazine_achievements: asArray(
+        result.magazine_achievements
+      ),
 
-      statistics: Array.isArray(result.statistics)
-        ? result.statistics
-        : [],
+      statistics: asArray(result.statistics),
 
-      event_achievements: Array.isArray(result.event_achievements)
-        ? result.event_achievements
-        : [],
+      event_achievements: asArray(
+        result.event_achievements
+      ),
 
-      public_results: Array.isArray(result.public_results)
-        ? result.public_results
-        : []
+      public_results: asArray(result.public_results)
     };
 
   } catch (error) {
     console.error("Aydon data loading error:", error);
+
+    data = structuredClone(defaultData);
   }
 }
 
@@ -522,7 +559,7 @@ function museumPage() {
       ${(data.events || []).map(event => row(
         event.title,
         event.subtitle,
-        `#/event/${encodeURIComponent(event.id)}`
+        `#/event/${encodeURIComponent(event.id || event.slug)}`
       )).join("")}
 
     </div>
@@ -688,7 +725,10 @@ function notFound() {
 }
 
 function render() {
-  if (!app) return;
+  if (!app) {
+    console.error("Aydon: عنصر app غير موجود في index.html");
+    return;
+  }
 
   let path = location.hash || "#/";
 
@@ -768,13 +808,21 @@ function render() {
 if (menuButton && nav) {
   menuButton.addEventListener("click", () => {
     const isOpen = nav.classList.toggle("open");
-    menuButton.setAttribute("aria-expanded", String(isOpen));
+
+    menuButton.setAttribute(
+      "aria-expanded",
+      String(isOpen)
+    );
   });
 
   nav.addEventListener("click", event => {
     if (event.target.closest("a")) {
       nav.classList.remove("open");
-      menuButton.setAttribute("aria-expanded", "false");
+
+      menuButton.setAttribute(
+        "aria-expanded",
+        "false"
+      );
     }
   });
 }
@@ -784,8 +832,21 @@ if (menuButton && nav) {
 window.addEventListener("hashchange", render);
 
 async function start() {
-  await loadData();
-  render();
+  if (!app) return;
+
+  try {
+    await loadData();
+    render();
+  } catch (error) {
+    console.error("Aydon startup error:", error);
+
+    app.innerHTML = `
+      <div class="empty-state">
+        <h2>تعذّر تحميل صفحات الذاكرة</h2>
+        <p>حاولي تحديث الصفحة بعد قليل.</p>
+      </div>
+    `;
+  }
 }
 
-start();
+start(); 

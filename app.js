@@ -152,9 +152,7 @@
 
     if (profileId) {
       const profile = findItem(state.data.profiles, profileId);
-      if (profile) {
-        return `<a class="topic-author" href="${profileLink(profile)}">بقلم: ${esc(itemTitle(profile))}</a>`;
-      }
+      if (profile) return `<a class="topic-author" href="${profileLink(profile)}">بقلم: ${esc(itemTitle(profile))}</a>`;
     }
 
     const journalist = state.data.journalists.find((person) =>
@@ -455,13 +453,15 @@
     return `${pageHeading("الملف الشخصي")}${emptyState("لم يُعثر على الملف المطلوب.")}`;
   }
 
+  /* لوحة الإدارة: admin.js يوفّر start() وليس render() */
   function renderAdmin() {
-    if (window.AdminPanel && typeof window.AdminPanel.render === "function") {
-      return window.AdminPanel.render();
+    if (window.AdminPanel && typeof window.AdminPanel.start === "function") {
+      window.AdminPanel.start();
+      return;
     }
 
-    return `${pageHeading("الإدارة")}
-      ${emptyState("لوحة الإدارة غير متاحة. تأكّد من تحميل ملف admin.js ثم أعد المحاولة.")}`;
+    app.innerHTML = `${pageHeading("الإدارة")}
+      ${emptyState("ملف الإدارة admin.js لم يتم تحميله. تأكدي من ربطه في الصفحة قبل app.js.")}`;
   }
 
   function renderNavigation() {
@@ -536,8 +536,8 @@
         break;
 
       case "admin":
-        app.innerHTML = renderAdmin();
-        break;
+        renderAdmin();
+        return;
 
       default:
         app.innerHTML = `${pageHeading("الصفحة غير موجودة")}${emptyState("الرابط الذي فتحته غير صالح أو لم يعد متاحًا.")}`;

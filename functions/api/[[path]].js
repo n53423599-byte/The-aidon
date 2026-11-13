@@ -25,8 +25,6 @@ const TABLES = {
   ]
 };
 
-const PUBLIC_TABLES = Object.keys(TABLES);
-
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -301,6 +299,66 @@ async function setupAdmin(request, env) {
   return json({
     success: true,
     message: "تم إنشاء حساب المشرف."
+  });
+}
+
+/* =========================
+   TEMPORARY PASSWORD RESET
+========================= */
+
+async function resetAdminPassword(request, env) {
+  if (!env.ADMIN_SETUP_KEY) {
+    return json({
+      error: "إعداد التهيئة غير موجود."
+    }, 503);
+  }
+
+  const body = await readBody(request);
+
+  if (!body || body.setup_key !== env.ADMIN_SETUP_KEY) {
+    return json({
+      error: "مفتاح التهيئة غير صحيح."
+    }, 403);
+  }
+
+  const username = String(body.username || "").trim();
+  const password = String(body.password || "");
+
+  if (username !== "Kuru") {
+    return json({
+      error: "اسم المستخدم غير صحيح."
+    }, 400);
+  }
+
+  if (password.length < 10 || password.length > 128) {
+    return json({
+      error: "كلمة المرور يجب أن تكون بين 10 و128 حرفًا."
+    }, 400);
+  }
+
+  const admin = await env.DB.prepare(
+    "SELECT id FROM admins WHERE username = ? LIMIT 1"
+  ).bind(username).first();
+
+  if (!admin) {
+    return json({
+      error: "الحساب غير موجود."
+    }, 404);
+  }
+
+  const passwordHash = await hashPassword(password);
+
+  await env.DB.prepare(
+    "UPDATE admins SET password_hash = ? WHERE id = ?"
+  ).bind(passwordHash, admin.id).run();
+
+  await env.DB.prepare(
+    "DELETE FROM admin_sessions WHERE admin_id = ?"
+  ).bind(admin.id).run();
+
+  return json({
+    success: true,
+    message: "تم تغيير كلمة المرور بنجاح."
   });
 }
 
@@ -671,9 +729,7 @@ export async function onRequest(context) {
   const { request, env } = context;
 
   const url = new URL(request.url);
-
   const path = url.pathname.replace(/\/+$/, "");
-
   const method = request.method.toUpperCase();
 
   if (method === "OPTIONS") {
@@ -706,6 +762,13 @@ export async function onRequest(context) {
       path === "/api/setup"
     ) {
       return await setupAdmin(request, env);
+    }
+
+    if (
+      method === "POST" &&
+      path === "/api/reset-admin-password"
+    ) {
+      return await resetAdminPassword(request, env);
     }
 
     if (
@@ -788,4 +851,4 @@ export async function onRequest(context) {
       error: "حدث خطأ داخلي أثناء معالجة الطلب."
     }, 500);
   }
-}
+    } 

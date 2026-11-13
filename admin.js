@@ -76,6 +76,7 @@ window.AdminPanel = (() => {
         ["category_id", "القسم", "category", true],
         ["title", "عنوان الموضوع", "text", true],
         ["journalist_title", "صفة الكاتب", "text"],
+        ["journalist_profile_id", "الملف الشخصي للكاتب", "profile"],
         ["image_key", "الصورة الرئيسية", "image"],
         ["body", "المحتوى", "textarea", true],
         ["position", "الترتيب", "number"]

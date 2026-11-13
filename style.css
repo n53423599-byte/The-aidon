@@ -763,3 +763,260 @@ footer {
     transition-duration: .01ms !important;
   }
 }
+/* ═══════════════════════════════════
+   لمسات بصرية إضافية | الآيدون
+   ═══════════════════════════════════ */
+
+/* خلفية أكثر عمقًا */
+
+body {
+  background:
+    radial-gradient(
+      ellipse at 80% 12%,
+      rgba(165, 138, 97, .075),
+      transparent 38%
+    ),
+    radial-gradient(
+      ellipse at 10% 75%,
+      rgba(90, 75, 55, .055),
+      transparent 40%
+    ),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+/* وهج هادئ متحرك */
+
+body::after {
+  content: "";
+  position: fixed;
+  width: 420px;
+  height: 420px;
+  top: 20%;
+  left: -240px;
+  border-radius: 50%;
+  background: rgba(193, 164, 119, .035);
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: -1;
+  animation: ambientGlow 18s ease-in-out infinite alternate;
+}
+
+@keyframes ambientGlow {
+  from {
+    transform: translateY(-30px);
+    opacity: .45;
+  }
+
+  to {
+    transform: translateY(100px);
+    opacity: 1;
+  }
+}
+
+/* تخفيف الفواصل في العناوين */
+
+.section-heading {
+  border-bottom: 0;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.section-heading h2 {
+  position: relative;
+  padding-right: 15px;
+}
+
+.section-heading h2::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 22%;
+  width: 3px;
+  height: 58%;
+  border-radius: 5px;
+  background: var(--bronze);
+}
+
+.page-header {
+  border-bottom: 0;
+  margin-bottom: 28px;
+}
+
+.hero {
+  border-bottom: 0;
+}
+
+/* القوائم الرئيسية: بطاقات بدل السطور */
+
+.link-list {
+  gap: 12px;
+}
+
+.nav-item,
+.nav-item:first-child {
+  min-height: 105px;
+  padding: 23px 22px;
+  border: 1px solid rgba(193, 164, 119, .10);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, .018);
+}
+
+.nav-item:hover {
+  padding-right: 27px;
+  background: rgba(193, 164, 119, .055);
+  border-color: rgba(193, 164, 119, .24);
+}
+
+/* بطاقات التصنيفات */
+
+.category-list {
+  gap: 13px;
+  border: 0;
+}
+
+.category-item {
+  min-height: 105px;
+  border: 1px solid rgba(193, 164, 119, .12);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, .018);
+}
+
+.category-item:hover {
+  background: rgba(193, 164, 119, .055);
+  border-color: rgba(193, 164, 119, .27);
+}
+
+/* الأقسام القابلة للفتح */
+
+.accordion-list {
+  border-top: 0;
+}
+
+.accordion {
+  margin-bottom: 10px;
+  padding: 0 16px;
+  border: 1px solid rgba(193, 164, 119, .12);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, .015);
+}
+
+.accordion summary {
+  min-height: 70px;
+}
+
+.accordion-content {
+  padding-bottom: 20px;
+}
+
+/* الأشخاص */
+
+.person-row {
+  border-bottom: 0;
+  border-radius: 4px;
+  padding: 12px 10px;
+}
+
+.person-row:hover {
+  background: rgba(193, 164, 119, .045);
+}
+
+/* الإنجازات والإحصاءات */
+
+.simple-row {
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .025);
+}
+
+/* الملف الشخصي */
+
+.profile-header {
+  border-bottom: 0;
+  background: rgba(255, 255, 255, .018);
+  padding: 24px;
+  border-radius: 5px;
+}
+
+/* المقالات */
+
+.topic {
+  padding: 20px 0 40px;
+}
+
+.topic-body {
+  max-width: 900px;
+  margin: auto;
+}
+
+/* الصور */
+
+.event-image,
+.topic img {
+  border-radius: 5px;
+}
+
+/* انتقالات أكثر هدوءًا */
+
+.nav-item,
+.category-item,
+.accordion,
+.person-row,
+.simple-row {
+  transition:
+    background .25s ease,
+    border-color .25s ease,
+    transform .25s ease;
+}
+
+@media (max-width: 760px) {
+  body {
+    background-attachment: scroll;
+  }
+
+  body::after {
+    width: 280px;
+    height: 280px;
+  }
+
+  .nav-item,
+  .nav-item:first-child {
+    min-height: 95px;
+    padding: 17px 15px;
+  }
+
+  .category-list {
+    gap: 10px;
+  }
+
+  .category-item {
+    min-height: 82px;
+  }
+
+  .profile-header {
+    padding: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    animation: none;
+  }
+}
+
+
+/* سهم القوائم المنسدلة */
+
+.accordion summary::after {
+  content: "⌄";
+  color: var(--bronze);
+  font-family: Arial, sans-serif;
+  font-size: 23px;
+  font-weight: 400;
+  transition: transform .3s ease, color .3s ease;
+}
+
+.accordion[open] summary::after {
+  content: "⌄";
+  transform: rotate(180deg);
+  color: var(--gold);
+}

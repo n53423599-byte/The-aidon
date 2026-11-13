@@ -171,7 +171,7 @@ async function requireAdmin(request, env) {
     FROM admin_sessions
     JOIN admins ON admins.id = admin_sessions.admin_id
     WHERE admin_sessions.token_hash = ?
-      AND admin_sessions.expires_at > datetime('now')
+    AND admin_sessions.expires_at > datetime('now')
     LIMIT 1
   `).bind(tokenHash).first();
 }
@@ -517,14 +517,12 @@ async function uploadImage(request, env) {
       `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${filePath}`,
       {
         method: "PUT",
-
         headers: {
           "Authorization": `Bearer ${env.GITHUB_TOKEN}`,
           "Accept": "application/vnd.github+json",
           "X-GitHub-Api-Version": "2022-11-28",
           "User-Agent": "Aidon-Website"
         },
-
         body: JSON.stringify({
           message: `Upload image ${filename}`,
           content: base64,
@@ -851,4 +849,4 @@ export async function onRequest(context) {
       error: "حدث خطأ داخلي أثناء معالجة الطلب."
     }, 500);
   }
-}
+              } 

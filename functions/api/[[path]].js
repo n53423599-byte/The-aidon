@@ -1,6 +1,7 @@
 const COOKIE_NAME = "eidon_session";
 const SESSION_DAYS = 7;
 const PBKDF2_ITERATIONS = 100000;
+const OWNER_USERNAME = "Kuru";
 
 const TABLES = {
   profiles: ["id", "name", "role", "image_key", "description", "extra_info"],
@@ -242,6 +243,133 @@ async function getAdminData(env) {
 }
 
 /* =========================
+   ADMIN MANAGEMENT
+   KURU ONLY
+========================= */
+
+function isOwner(admin) {
+  return !!admin && admin.username === OWNER_USERNAME;
+}
+
+async function getManagers(env) {
+  const result = await env.DB.prepare(`
+    SELECT id, username
+    FROM admins
+    ORDER BY username
+  `).all();
+
+  return result.results || [];
+}
+
+async function createManager(request, env, admin) {
+  if (!isOwner(admin)) {
+    return json({
+      error: "هذه الصلاحية للمشرف الرئيسي فقط."
+    }, 403);
+  }
+
+  const body = await readBody(request);
+
+  if (!body) {
+    return json({
+      error: "البيانات غير صالحة."
+    }, 400);
+  }
+
+  const username = String(body.username || "").trim();
+  const password = String(body.password || "");
+
+  if (!/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
+    return json({
+      error: "اسم المستخدم يجب أن يكون من 3 إلى 30 حرفًا أو رقمًا."
+    }, 400);
+  }
+
+  if (username.toLowerCase() === OWNER_USERNAME.toLowerCase()) {
+    return json({
+      error: "اسم المشرف الرئيسي محجوز."
+    }, 400);
+  }
+
+  if (password.length < 10 || password.length > 128) {
+    return json({
+      error: "كلمة المرور يجب أن تكون بين 10 و128 حرفًا."
+    }, 400);
+  }
+
+  const existing = await env.DB.prepare(
+    "SELECT id FROM admins WHERE username = ? LIMIT 1"
+  ).bind(username).first();
+
+  if (existing) {
+    return json({
+      error: "اسم المستخدم مستخدم بالفعل."
+    }, 409);
+  }
+
+  const passwordHash = await hashPassword(password);
+
+  await env.DB.prepare(`
+    INSERT INTO admins (id, username, password_hash)
+    VALUES (?, ?, ?)
+  `).bind(
+    randomId(),
+    username,
+    passwordHash
+  ).run();
+
+  return json({
+    success: true,
+    message: "تم إنشاء حساب المشرف."
+  });
+}
+
+async function deleteManager(request, env, admin) {
+  if (!isOwner(admin)) {
+    return json({
+      error: "هذه الصلاحية للمشرف الرئيسي فقط."
+    }, 403);
+  }
+
+  const body = await readBody(request);
+
+  if (!body || !body.id) {
+    return json({
+      error: "بيانات الحذف غير صالحة."
+    }, 400);
+  }
+
+  const target = await env.DB.prepare(
+    "SELECT id, username FROM admins WHERE id = ? LIMIT 1"
+  ).bind(body.id).first();
+
+  if (!target) {
+    return json({
+      error: "المشرف غير موجود."
+    }, 404);
+  }
+
+  if (target.username === OWNER_USERNAME) {
+    return json({
+      error: "لا يمكن حذف حساب المشرف الرئيسي."
+    }, 403);
+  }
+
+  await env.DB.prepare(
+    "DELETE FROM admin_sessions WHERE admin_id = ?"
+  ).bind(target.id).run();
+
+  await env.DB.prepare(
+    "DELETE FROM admins WHERE id = ?"
+  ).bind(target.id).run();
+
+  return json({
+    success: true,
+    message: "تم حذف حساب المشرف."
+  });
+}
+
+/* =========================
    FIRST ADMIN SETUP
 ========================= */
 
@@ -324,7 +452,7 @@ async function resetAdminPassword(request, env) {
   const username = String(body.username || "").trim();
   const password = String(body.password || "");
 
-  if (username !== "Kuru") {
+  if (username !== OWNER_USERNAME) {
     return json({
       error: "اسم المستخدم غير صحيح."
     }, 400);
@@ -412,7 +540,8 @@ async function login(request, env) {
   return json(
     {
       success: true,
-      username: admin.username
+      username: admin.username,
+      is_owner: isOwner(admin)
     },
     200,
     {
@@ -799,6 +928,52 @@ export async function onRequest(context) {
       }, 401);
     }
 
+    /* ADMIN IDENTITY */
+
+    if (
+      method === "GET" &&
+      path === "/api/admin/check"
+    ) {
+      return json({
+        authenticated: !!admin,
+        username: admin?.username || null,
+        is_owner: isOwner(admin)
+      });
+    }
+
+    /* MANAGERS — OWNER ONLY */
+
+    if (
+      method === "GET" &&
+      path === "/api/admin/managers"
+    ) {
+      if (!isOwner(admin)) {
+        return json({
+          error: "هذه الصلاحية للمشرف الرئيسي فقط."
+        }, 403);
+      }
+
+      return json({
+        managers: await getManagers(env)
+      });
+    }
+
+    if (
+      method === "POST" &&
+      path === "/api/admin/managers/create"
+    ) {
+      return await createManager(request, env, admin);
+    }
+
+    if (
+      method === "POST" &&
+      path === "/api/admin/managers/delete"
+    ) {
+      return await deleteManager(request, env, admin);
+    }
+
+    /* CONTENT MANAGEMENT */
+
     if (
       method === "GET" &&
       path === "/api/admin/data"
@@ -806,15 +981,6 @@ export async function onRequest(context) {
       return json(
         await getAdminData(env)
       );
-    }
-
-    if (
-      method === "GET" &&
-      path === "/api/admin/check"
-    ) {
-      return json({
-        authenticated: !!admin
-      });
     }
 
     if (

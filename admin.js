@@ -6,11 +6,14 @@ window.AdminPanel = (() => {
   "use strict";
 
   const API = "/api";
+  const OWNER_USERNAME = "Kuru";
 
   const state = {
     data: null,
     section: "profiles",
-    image: null
+    image: null,
+    username: "",
+    isOwner: false
   };
 
   const sections = {
@@ -433,6 +436,22 @@ window.AdminPanel = (() => {
         margin-top: 8px;
       }
 
+      .admin-manager-badge {
+        display: inline-block;
+        margin-top: 7px;
+        padding: 4px 9px;
+        border: 1px solid #765b3d;
+        border-radius: 20px;
+        color: #d6b17b;
+        font-size: 12px;
+      }
+
+      .admin-manager-note {
+        color: #ad9c87;
+        line-height: 1.8;
+        margin: 0 0 20px;
+      }
+
       @media (max-width: 700px) {
         .admin-layout {
           grid-template-columns: 1fr;
@@ -527,17 +546,40 @@ window.AdminPanel = (() => {
     const form = new FormData(event.currentTarget);
 
     try {
-      await post("/login", {
+      const result = await post("/login", {
         username: form.get("username"),
         password: form.get("password")
       });
 
+      state.username = result.username || "";
+      state.isOwner = Boolean(result.is_owner);
+
+      await refreshIdentity();
       await loadData();
+
+      state.section = "profiles";
       showDashboard();
 
     } catch (error) {
       notify(error.message, "error");
     }
+  }
+
+  /* =========================
+     IDENTITY
+  ========================= */
+
+  async function refreshIdentity() {
+    const result = await api("/admin/check");
+
+    if (!result.authenticated) {
+      throw new Error("انتهت جلسة الدخول.");
+    }
+
+    state.username = result.username || "";
+    state.isOwner = Boolean(result.is_owner);
+
+    return result;
   }
 
   /* =========================
@@ -561,7 +603,10 @@ window.AdminPanel = (() => {
         <header class="admin-top">
           <div>
             <h1>لوحة إدارة طبعة الآيدون الأخيرة</h1>
-            <p>إدارة محتويات الموقع وأرشيفه.</p>
+            <p>
+              مرحبًا ${escapeHTML(state.username || "بك")}.
+              ${state.isOwner ? "حساب الإدارة الرئيسية." : "حساب مشرف."}
+            </p>
           </div>
 
           <button class="admin-button danger"
@@ -588,6 +633,13 @@ window.AdminPanel = (() => {
                     data-section="settings">
               إعدادات الموقع
             </button>
+
+            ${state.isOwner ? `
+              <button type="button"
+                      data-section="managers">
+                إدارة المشرفين
+              </button>
+            ` : ""}
           </nav>
 
           <main class="admin-content" id="admin-content"></main>
@@ -606,7 +658,16 @@ window.AdminPanel = (() => {
 
       if (!button) return;
 
-      state.section = button.dataset.section;
+      const requestedSection = button.dataset.section;
+
+      if (
+        requestedSection === "managers" &&
+        !state.isOwner
+      ) {
+        return;
+      }
+
+      state.section = requestedSection;
       state.image = null;
 
       renderSection();
@@ -621,6 +682,11 @@ window.AdminPanel = (() => {
     } catch {}
 
     state.data = null;
+    state.username = "";
+    state.isOwner = false;
+    state.image = null;
+    state.section = "profiles";
+
     showLogin();
   }
 
@@ -638,6 +704,17 @@ window.AdminPanel = (() => {
 
     if (state.section === "settings") {
       renderSettings();
+      return;
+    }
+
+    if (state.section === "managers") {
+      if (!state.isOwner) {
+        state.section = "profiles";
+        renderSection();
+        return;
+      }
+
+      renderManagers();
       return;
     }
 
@@ -733,6 +810,257 @@ window.AdminPanel = (() => {
         if (record) deleteItem(section, record);
       }
     });
+  }
+
+  /* =========================
+     MANAGERS
+  ========================= */
+
+  async function renderManagers() {
+    if (!state.isOwner) return;
+
+    const content = $("#admin-content");
+
+    content.innerHTML = `
+      <div class="admin-top">
+        <div>
+          <h2>إدارة المشرفين</h2>
+          <small>إضافة الحسابات الإدارية والتحكم بها.</small>
+        </div>
+
+        <button class="admin-button primary"
+                id="manager-add">
+          إضافة مشرف
+        </button>
+      </div>
+
+      <p class="admin-manager-note">
+        يمكنك إنشاء حسابات للمشرفين الآخرين أو حذفها.
+        حساب الإدارة الرئيسية Kuru محمي ولا يمكن حذفه.
+      </p>
+
+      <div class="admin-list" id="manager-list">
+        <div class="admin-empty">جارٍ تحميل المشرفين...</div>
+      </div>
+    `;
+
+    $("#manager-add").addEventListener(
+      "click",
+      showManagerForm
+    );
+
+    try {
+      const result = await api("/admin/managers");
+      const managers = result.managers || [];
+
+      const list = $("#manager-list");
+
+      if (!list) return;
+
+      list.innerHTML = managers.length
+        ? managers.map(manager => {
+            const isMain =
+              String(manager.username).toLowerCase() ===
+              OWNER_USERNAME.toLowerCase();
+
+            return `
+              <article class="admin-item">
+                <div class="admin-item-main">
+                  <strong>${escapeHTML(manager.username)}</strong>
+
+                  <span class="admin-manager-badge">
+                    ${isMain ? "الإدارة الرئيسية" : "مشرف"}
+                  </span>
+                </div>
+
+                <div class="admin-actions">
+                  ${isMain ? `
+                    <button class="admin-button" disabled>
+                      الحساب الرئيسي
+                    </button>
+                  ` : `
+                    <button class="admin-button danger"
+                            data-manager-delete="${escapeHTML(manager.id)}"
+                            data-manager-name="${escapeHTML(manager.username)}">
+                      حذف المشرف
+                    </button>
+                  `}
+                </div>
+              </article>
+            `;
+          }).join("")
+        : `
+          <div class="admin-empty">
+            لا توجد حسابات مشرفين.
+          </div>
+        `;
+
+      list.addEventListener("click", event => {
+        const button = event.target.closest(
+          "[data-manager-delete]"
+        );
+
+        if (!button) return;
+
+        deleteManager(
+          button.dataset.managerDelete,
+          button.dataset.managerName
+        );
+      });
+
+    } catch (error) {
+      const list = $("#manager-list");
+
+      if (list) {
+        list.innerHTML = `
+          <div class="admin-empty">
+            ${escapeHTML(error.message)}
+          </div>
+        `;
+      }
+    }
+  }
+
+  function showManagerForm() {
+    if (!state.isOwner) return;
+
+    const content = $("#admin-content");
+
+    content.innerHTML = `
+      <div class="admin-top">
+        <h2>إضافة مشرف جديد</h2>
+
+        <button class="admin-button" id="manager-back">
+          العودة
+        </button>
+      </div>
+
+      <p class="admin-manager-note">
+        أنشئي اسم مستخدم وكلمة مرور خاصة بالمشرف الجديد.
+        يجب ألا تقل كلمة المرور عن 10 أحرف.
+      </p>
+
+      <form id="manager-form" class="admin-form">
+
+        <div class="admin-field">
+          <label for="manager-username">اسم المستخدم</label>
+
+          <input
+            id="manager-username"
+            name="username"
+            type="text"
+            minlength="3"
+            maxlength="30"
+            pattern="[A-Za-z0-9_-]+"
+            autocomplete="off"
+            required
+          >
+        </div>
+
+        <div class="admin-field">
+          <label for="manager-password">كلمة المرور</label>
+
+          <input
+            id="manager-password"
+            name="password"
+            type="password"
+            minlength="10"
+            maxlength="128"
+            autocomplete="new-password"
+            required
+          >
+        </div>
+
+        <div class="admin-form-actions">
+          <button class="admin-button primary" type="submit">
+            إنشاء حساب المشرف
+          </button>
+
+          <button class="admin-button"
+                  type="button"
+                  id="manager-cancel">
+            إلغاء
+          </button>
+        </div>
+
+      </form>
+    `;
+
+    $("#manager-back").addEventListener(
+      "click",
+      renderManagers
+    );
+
+    $("#manager-cancel").addEventListener(
+      "click",
+      renderManagers
+    );
+
+    $("#manager-form").addEventListener(
+      "submit",
+      createManager
+    );
+  }
+
+  async function createManager(event) {
+    event.preventDefault();
+
+    if (!state.isOwner) return;
+
+    const form = new FormData(event.currentTarget);
+
+    const username = String(
+      form.get("username") || ""
+    ).trim();
+
+    const password = String(
+      form.get("password") || ""
+    );
+
+    const button = event.currentTarget.querySelector(
+      'button[type="submit"]'
+    );
+
+    button.disabled = true;
+    button.textContent = "جارٍ إنشاء الحساب...";
+
+    try {
+      await post("/admin/managers/create", {
+        username,
+        password
+      });
+
+      notify("تم إنشاء حساب المشرف بنجاح.", "success");
+
+      await renderManagers();
+
+    } catch (error) {
+      notify(error.message, "error");
+
+      button.disabled = false;
+      button.textContent = "إنشاء حساب المشرف";
+    }
+  }
+
+  async function deleteManager(id, username) {
+    if (!state.isOwner) return;
+
+    if (!confirm(
+      `هل تريدين حذف حساب المشرف "${username}"؟\n\nسيتم إنهاء جلساته ولن يستطيع تسجيل الدخول مجددًا.`
+    )) return;
+
+    try {
+      await post("/admin/managers/delete", {
+        id
+      });
+
+      notify("تم حذف حساب المشرف.", "success");
+
+      await renderManagers();
+
+    } catch (error) {
+      notify(error.message, "error");
+    }
   }
 
   /* =========================
@@ -1212,10 +1540,16 @@ window.AdminPanel = (() => {
     `;
 
     try {
+      await refreshIdentity();
       await loadData();
+
       showDashboard();
 
     } catch {
+      state.data = null;
+      state.username = "";
+      state.isOwner = false;
+
       showLogin();
     }
   }
@@ -1225,4 +1559,4 @@ window.AdminPanel = (() => {
     reload: loadData
   };
 
-})(); 
+})();

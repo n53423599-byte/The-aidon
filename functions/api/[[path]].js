@@ -842,7 +842,12 @@ export async function onRequest(context) {
       return await saveSettings(request, env);
     }
 
-        return json({
+    return json({
+      error: "المسار غير موجود."
+    }, 404);
+
+  } catch (error) {
+    return json({
       error: "حدث خطأ داخلي أثناء معالجة الطلب."
     }, 500);
   }

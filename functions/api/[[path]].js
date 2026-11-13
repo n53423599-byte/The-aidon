@@ -540,15 +540,19 @@ async function uploadImage(request, env) {
       }, 502);
     }
 
+    const imageUrl =
+      `https://raw.githubusercontent.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/${env.GITHUB_BRANCH}/${filePath}`;
+
     return json({
       success: true,
-      image_key: `/${filePath}`,
-      url: `/${filePath}`
+      image_key: imageUrl,
+      url: imageUrl
     });
 
-  } catch {
+  } catch (error) {
     return json({
-      error: "تعذّر الاتصال بخدمة رفع الصور."
+      error: "تعذّر الاتصال بخدمة رفع الصور.",
+      details: error.message
     }, 502);
   }
 }
@@ -849,4 +853,4 @@ export async function onRequest(context) {
       error: "حدث خطأ داخلي أثناء معالجة الطلب."
     }, 500);
   }
-              } 
+}

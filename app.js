@@ -84,10 +84,7 @@ function escapeHTML(value = "") {
 function safeImage(value = "") {
   const url = String(value).trim();
 
-  if (
-    url.startsWith("/") &&
-    !url.startsWith("//")
-  ) {
+  if (url.startsWith("/") && !url.startsWith("//")) {
     return escapeHTML(url);
   }
 
@@ -112,9 +109,7 @@ function row(title, description = "", link = "") {
     <a class="nav-item" href="${escapeHTML(link)}">
       <div>
         <h3>${escapeHTML(title)}</h3>
-        ${description
-          ? `<p>${escapeHTML(description)}</p>`
-          : ""}
+        ${description ? `<p>${escapeHTML(description)}</p>` : ""}
       </div>
       <span class="arrow" aria-hidden="true">←</span>
     </a>
@@ -124,14 +119,10 @@ function row(title, description = "", link = "") {
 function pageHeader(title, description = "") {
   return `
     <a class="back-link" href="#/">← العودة للرئيسية</a>
-
     <header class="page-header">
       <div class="eyebrow">㊗️ من ذاكرة الآيدون</div>
       <h1>${escapeHTML(title)}</h1>
-
-      ${description
-        ? `<p class="intro">${escapeHTML(description)}</p>`
-        : ""}
+      ${description ? `<p class="intro">${escapeHTML(description)}</p>` : ""}
     </header>
   `;
 }
@@ -140,10 +131,7 @@ function sectionHeading(title, description = "") {
   return `
     <div class="section-heading">
       <h2>${escapeHTML(title)}</h2>
-
-      ${description
-        ? `<p>${escapeHTML(description)}</p>`
-        : ""}
+      ${description ? `<p>${escapeHTML(description)}</p>` : ""}
     </div>
   `;
 }
@@ -172,9 +160,7 @@ async function loadData() {
   try {
     const response = await fetch("/api/public", {
       method: "GET",
-      headers: {
-        "Accept": "application/json"
-      },
+      headers: { "Accept": "application/json" },
       cache: "no-store"
     });
 
@@ -214,22 +200,19 @@ async function loadData() {
         )
       },
 
-      leadership:
-        asArray(result.leadership).length
-          ? result.leadership
-          : defaultData.leadership,
+      leadership: asArray(result.leadership).length
+        ? result.leadership
+        : defaultData.leadership,
 
-      journalists:
-        asArray(result.journalists).length
-          ? result.journalists
-          : defaultData.journalists,
+      journalists: asArray(result.journalists).length
+        ? result.journalists
+        : defaultData.journalists,
 
-      categories:
-        asArray(result.categories).length
-          ? result.categories
-          : asArray(result.archive_categories).length
-            ? result.archive_categories
-            : defaultData.categories,
+      categories: asArray(result.categories).length
+        ? result.categories
+        : asArray(result.archive_categories).length
+          ? result.archive_categories
+          : defaultData.categories,
 
       topics: asArray(result.topics).length
         ? result.topics
@@ -241,22 +224,14 @@ async function loadData() {
         ? result.events
         : defaultData.events,
 
-      magazine_achievements: asArray(
-        result.magazine_achievements
-      ),
-
+      magazine_achievements: asArray(result.magazine_achievements),
       statistics: asArray(result.statistics),
-
-      event_achievements: asArray(
-        result.event_achievements
-      ),
-
+      event_achievements: asArray(result.event_achievements),
       public_results: asArray(result.public_results)
     };
 
   } catch (error) {
     console.error("Aydon data loading error:", error);
-
     data = structuredClone(defaultData);
   }
 }
@@ -270,9 +245,7 @@ function getLeadership() {
     /قائدة|نائب|مستشار/.test(person.role || "")
   );
 
-  return leaders.length
-    ? leaders
-    : data.leadership;
+  return leaders.length ? leaders : data.leadership;
 }
 
 /* الصفحة الرئيسية */
@@ -282,23 +255,15 @@ function homePage() {
 
   app.innerHTML = `
     <section class="hero">
-
       <div class="eyebrow">العدد الختامي · ㊗️</div>
-
       <h1>${escapeHTML(settings.site_title)}</h1>
-
-      <p class="intro">
-        ${escapeHTML(settings.intro)}
-      </p>
-
+      <p class="intro">${escapeHTML(settings.intro)}</p>
     </section>
 
     <section class="home-destinations">
-
       ${sectionHeading("أبواب الذاكرة")}
 
       <div class="link-list">
-
         ${row(
           "مجلة الآيدون",
           "مساحةٌ تحفظ سيرة الآيدون㊗️، ومحطّاتها وأبرز ما شهدته من أحداثٍ وتحولات، منذ البدايات حتى الفصل الأخير.",
@@ -316,7 +281,6 @@ function homePage() {
           "موضعٌ تُحفظ فيه نتائج الآسترا💫، وأسماءُ المتوّجين في رقعة الآيدون♟️، توثيقًا للاستحقاق وصونًا لذكرى أصحاب الإنجاز.",
           "#/museum"
         )}
-
       </div>
     </section>
   `;
@@ -329,16 +293,12 @@ function magazinePage() {
   const journalists = data.journalists || [];
 
   app.innerHTML = `
-    ${pageHeader(
-      "مَجلـة الآيـدون㊗️",
-      data.settings.magazine_intro
-    )}
+    ${pageHeader("مَجلـة الآيـدون㊗️", data.settings.magazine_intro)}
 
     <div class="accordion-list">
 
       <details class="accordion">
         <summary>تعريف المجلة</summary>
-
         <div class="accordion-content">
           <p class="intro">
             صحيفةٌ وُجدت لتوثّق ما مرّ بالآيدون، وتجمع أخبارها وتقاريرها،
@@ -349,47 +309,33 @@ function magazinePage() {
 
       <details class="accordion">
         <summary>العُليا</summary>
-
         <div class="accordion-content">
-
           ${leaders.map(person => {
             const profile = data.profiles.find(item =>
-              item.id === person.id ||
-              item.name === person.name
+              item.id === person.id || item.name === person.name
             );
 
             const content = `
               ${person.image_key
                 ? `<img src="${safeImage(person.image_key)}" alt="">`
                 : ""}
-
               <div>
-                <div class="person-name">
-                  ${escapeHTML(person.name)}
-                </div>
-
-                <div class="person-role">
-                  ${escapeHTML(person.role)}
-                </div>
+                <div class="person-name">${escapeHTML(person.name)}</div>
+                <div class="person-role">${escapeHTML(person.role)}</div>
               </div>
-
               <span class="arrow">←</span>
             `;
 
             return profile
               ? `<a class="person-row" href="${getProfileLink(profile)}">${content}</a>`
               : `<div class="person-row">${content}</div>`;
-
           }).join("")}
-
         </div>
       </details>
 
       <details class="accordion">
         <summary>الصحفيون</summary>
-
         <div class="accordion-content">
-
           ${journalists.map(person => `
             <div class="person-row">
               <div class="person-name">
@@ -397,13 +343,11 @@ function magazinePage() {
               </div>
             </div>
           `).join("")}
-
         </div>
       </details>
 
       <details class="accordion">
         <summary>الإنجازات</summary>
-
         <div class="accordion-content">
           ${renderMagazineAchievements(data.magazine_achievements)}
         </div>
@@ -411,7 +355,6 @@ function magazinePage() {
 
       <details class="accordion">
         <summary>الآيدون بالأرقام</summary>
-
         <div class="accordion-content">
           ${renderStatistics(data.statistics)}
         </div>
@@ -459,21 +402,16 @@ function archivePage() {
     )}
 
     <div class="category-list">
-
       ${categories.length
         ? categories.map(category => `
           <a class="category-item"
              href="#/archive/${encodeURIComponent(category.id)}">
-
             <h3>${escapeHTML(category.name || category.title)}</h3>
-
             <span class="arrow">←</span>
-
           </a>
         `).join("")
         : emptyState("لا توجد أقسام منشورة حاليًا.")
       }
-
     </div>
   `;
 }
@@ -497,18 +435,14 @@ function categoryPage(id) {
     ${pageHeader(category.name || category.title, "من محفوظات الآيدون.")}
 
     <div class="link-list">
-
       ${topics.length
         ? topics.map(topic => row(
             topic.title,
-            topic.journalist_title
-              ? `بقلم: ${topic.journalist_title}`
-              : "",
+            topic.journalist_title ? `بقلم: ${topic.journalist_title}` : "",
             `#/topic/${encodeURIComponent(topic.id)}`
           )).join("")
         : emptyState("لم تُنشر موضوعات في هذا القسم بعد.")
       }
-
     </div>
   `;
 }
@@ -527,7 +461,6 @@ function topicPage(id) {
     ${pageHeader(topic.title)}
 
     <article class="topic">
-
       ${topic.journalist_title
         ? `<div class="byline">بقلم: ${escapeHTML(topic.journalist_title)}</div>`
         : ""}
@@ -540,7 +473,6 @@ function topicPage(id) {
       <div class="topic-body">
         ${escapeHTML(topic.body || "").replace(/\n/g, "<br>")}
       </div>
-
     </article>
   `;
 }
@@ -555,13 +487,11 @@ function museumPage() {
     )}
 
     <div class="link-list">
-
       ${(data.events || []).map(event => row(
         event.title,
         event.subtitle,
         `#/event/${encodeURIComponent(event.id || event.slug)}`
       )).join("")}
-
     </div>
   `;
 }
@@ -601,7 +531,6 @@ function eventPage(id) {
     ${sectionHeading("سجلّ الإنجازات")}
 
     <div class="link-list">
-
       ${achievements.length
         ? achievements.map(item => {
             const profileId = item.profile_id || item.winner_profile_id;
@@ -618,13 +547,11 @@ function eventPage(id) {
           }).join("")
         : emptyState("لم تُضف إنجازات بعد.")
       }
-
     </div>
 
     ${sectionHeading("النتائج والتتويجات")}
 
     <div class="link-list">
-
       ${results.length
         ? results.map(item => {
             const profileId = item.winner_profile_id || item.profile_id;
@@ -641,7 +568,6 @@ function eventPage(id) {
           }).join("")
         : emptyState("لم تُضف نتائج بعد.")
       }
-
     </div>
 
     <a class="back-link" href="#/museum">
@@ -671,7 +597,6 @@ function profilePage(id) {
     ${pageHeader("من أصحاب الأثر")}
 
     <div class="profile-header">
-
       ${profile.image_key
         ? `<img src="${safeImage(profile.image_key)}"
                 alt="${escapeHTML(profile.name)}">`
@@ -681,7 +606,6 @@ function profilePage(id) {
         <h2>${escapeHTML(profile.name)}</h2>
         <p>${escapeHTML(profile.role || "")}</p>
       </div>
-
     </div>
 
     ${profile.description
@@ -691,15 +615,12 @@ function profilePage(id) {
       : ""}
 
     ${profile.extra_info
-      ? `<div class="simple-row">
-           ${escapeHTML(profile.extra_info)}
-         </div>`
+      ? `<div class="simple-row">${escapeHTML(profile.extra_info)}</div>`
       : ""}
 
     ${sectionHeading("الإنجازات")}
 
     <div class="link-list">
-
       ${achievements.length
         ? achievements.map(item => row(
             item.title,
@@ -708,7 +629,6 @@ function profilePage(id) {
           )).join("")
         : emptyState("لا توجد إنجازات مسجلة.")
       }
-
     </div>
   `;
 }
@@ -827,16 +747,26 @@ if (menuButton && nav) {
   });
 }
 
-/* تشغيل الموقع */
+/* تشغيل الموقع - النسخة المعدّلة */
 
 window.addEventListener("hashchange", render);
 
 async function start() {
-  if (!app) return;
+  if (!app) {
+    console.error("Aydon: عنصر app غير موجود.");
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="empty-state">
+      <p>تُفتح صفحات الذاكرة...</p>
+    </div>
+  `;
 
   try {
     await loadData();
     render();
+
   } catch (error) {
     console.error("Aydon startup error:", error);
 

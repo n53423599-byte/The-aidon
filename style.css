@@ -1184,3 +1184,59 @@ footer {
     transition-duration: .01ms !important;
   }
   } 
+/* كوكبة نجوم خافتة */
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  background:
+    /* نقاط النجوم */
+    radial-gradient(circle, #d6c6a9 1px, transparent 1.8px)
+      18% 24% / 100% 100% no-repeat,
+
+    radial-gradient(circle, #d6c6a9 1px, transparent 1.8px)
+      22% 29% / 100% 100% no-repeat,
+
+    radial-gradient(circle, #b8c5ca 1.2px, transparent 2px)
+      27% 27% / 100% 100% no-repeat,
+
+    radial-gradient(circle, #d6c6a9 1px, transparent 1.8px)
+      31% 35% / 100% 100% no-repeat,
+
+    radial-gradient(circle, #b8c5ca 1px, transparent 1.8px)
+      36% 33% / 100% 100% no-repeat,
+
+    /* خطوط رفيعة تصل النجوم */
+    linear-gradient(24deg, transparent 49.7%, rgba(190,170,140,.24) 50%, transparent 50.3%)
+      18% 24% / 9% 8% no-repeat,
+
+    linear-gradient(-12deg, transparent 49.7%, rgba(190,170,140,.20) 50%, transparent 50.3%)
+      27% 27% / 9% 8% no-repeat,
+
+    linear-gradient(35deg, transparent 49.7%, rgba(190,170,140,.20) 50%, transparent 50.3%)
+      31% 35% / 7% 7% no-repeat,
+
+    /* ضباب برونزي */
+    radial-gradient(ellipse at 30% 30%,
+      rgba(135, 103, 76, .12),
+      transparent 45%
+    );
+
+  opacity: .8;
+  animation: constellationDrift 28s ease-in-out infinite alternate;
+}
+
+@keyframes constellationDrift {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: .55;
+  }
+  to {
+    transform: translate3d(1%, -1%, 0);
+    opacity: .9;
+  }
+}

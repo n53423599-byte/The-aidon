@@ -1283,3 +1283,39 @@ footer {
     transition-duration: .01ms !important;
   }
 }
+/* Darker Aydon Atmosphere */
+
+body {
+  background:
+    radial-gradient(
+      ellipse at 15% 15%,
+      rgba(135, 96, 57, .12),
+      transparent 42%
+    ),
+    radial-gradient(
+      ellipse at 85% 80%,
+      rgba(105, 75, 49, .09),
+      transparent 43%
+    ),
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(75, 58, 42, .07),
+      transparent 45%
+    ),
+    linear-gradient(
+      135deg,
+      #12110f,
+      #191612,
+      #11100e
+    );
+
+  background-size: 220% 220%;
+}
+
+body::after {
+  filter: blur(55px) brightness(.78);
+}
+
+.topbar {
+  background: rgba(16, 15, 13, .90);
+}

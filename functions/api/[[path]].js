@@ -541,7 +541,8 @@ async function uploadImage(request, env) {
     }
 
     const imageUrl =
-      `https://raw.githubusercontent.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/${env.GITHUB_BRANCH}/${filePath}`;
+      result.content?.download_url ||
+      `https://raw.githubusercontent.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/refs/heads/${env.GITHUB_BRANCH}/${filePath}`;
 
     return json({
       success: true,

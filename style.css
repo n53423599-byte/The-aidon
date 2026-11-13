@@ -20,7 +20,7 @@
 }
 
 /* ═══════════════════════════════════════
-   الأساس والخلفية المتحركة
+   الأساس والخلفية الكونية المتحركة
    ═══════════════════════════════════════ */
 
 * {
@@ -70,10 +70,10 @@ body {
     );
 
   background-size: 220% 220%;
-  animation: backgroundDrift 16s ease-in-out infinite alternate;
+  animation: backgroundDrift 22s ease-in-out infinite alternate;
 }
 
-/* حركة التدرجات الأساسية */
+/* حركة الخلفية */
 
 @keyframes backgroundDrift {
   0% {
@@ -89,7 +89,9 @@ body {
   }
 }
 
-/* نسيج الخلفية */
+/* ═══════════════════════════════════════
+   طبقة النجوم والكوكبة
+   ═══════════════════════════════════════ */
 
 body::before {
   content: "";
@@ -98,18 +100,96 @@ body::before {
   z-index: 0;
   pointer-events: none;
 
-  opacity: .13;
-
   background-image:
-    radial-gradient(
-      rgba(238, 232, 220, .19) .55px,
-      transparent .75px
-    );
 
-  background-size: 5px 5px;
+    /* نقاط النجوم */
+    radial-gradient(circle, rgba(210, 183, 145, .9) 1px, transparent 1.8px),
+    radial-gradient(circle, rgba(210, 183, 145, .7) 1px, transparent 1.8px),
+    radial-gradient(circle, rgba(190, 202, 205, .85) 1.2px, transparent 2px),
+    radial-gradient(circle, rgba(210, 183, 145, .7) 1px, transparent 1.8px),
+    radial-gradient(circle, rgba(190, 202, 205, .75) 1px, transparent 1.8px),
+
+    /* خطوط الكوكبة */
+    linear-gradient(
+      25deg,
+      transparent 49.7%,
+      rgba(190, 157, 119, .25) 50%,
+      transparent 50.3%
+    ),
+    linear-gradient(
+      -20deg,
+      transparent 49.7%,
+      rgba(190, 157, 119, .20) 50%,
+      transparent 50.3%
+    ),
+    linear-gradient(
+      30deg,
+      transparent 49.7%,
+      rgba(190, 157, 119, .18) 50%,
+      transparent 50.3%
+    ),
+
+    /* نجوم متناثرة */
+    radial-gradient(rgba(238, 232, 220, .5) .6px, transparent 1px);
+
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    11% 8%,
+    12% 9%,
+    8% 6%,
+    95px 95px;
+
+  background-position:
+    18% 24%,
+    22% 29%,
+    27% 27%,
+    31% 35%,
+    36% 33%,
+    18% 24%,
+    27% 27%,
+    31% 35%,
+    0 0;
+
+  background-repeat:
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    repeat;
+
+  opacity: .55;
+
+  animation: starsDrift 35s ease-in-out infinite alternate;
 }
 
-/* وهج برونزي واسع ومتحرك */
+@keyframes starsDrift {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: .38;
+  }
+
+  50% {
+    transform: translate3d(-.5%, .5%, 0);
+    opacity: .68;
+  }
+
+  100% {
+    transform: translate3d(1%, -1%, 0);
+    opacity: .5;
+  }
+}
+
+/* ═══════════════════════════════════════
+   الضباب الكوني والوهج السماوي
+   ═══════════════════════════════════════ */
 
 body::after {
   content: "";
@@ -123,41 +203,60 @@ body::after {
   pointer-events: none;
 
   background:
+
+    /* وهج سماوي خافت على الطرف */
+    radial-gradient(
+      ellipse at 105% 32%,
+      rgba(157, 111, 83, .22),
+      rgba(115, 78, 63, .09) 20%,
+      transparent 38%
+    ),
+
+    /* ضباب برونزي */
     radial-gradient(
       ellipse at 25% 35%,
       rgba(183, 139, 87, .17),
-      transparent 32%
+      transparent 34%
     ),
+
     radial-gradient(
       ellipse at 75% 70%,
       rgba(157, 119, 76, .12),
       transparent 35%
     ),
+
     radial-gradient(
       ellipse at 55% 15%,
       rgba(193, 164, 119, .09),
       transparent 30%
+    ),
+
+    /* غبار كوني خافت */
+    radial-gradient(
+      ellipse at 45% 60%,
+      rgba(104, 69, 62, .10),
+      transparent 45%
     );
 
-  filter: blur(65px);
+  filter: blur(55px);
 
-  animation: floatingLight 19s ease-in-out infinite alternate;
+  animation: floatingLight 23s ease-in-out infinite alternate;
 }
 
 @keyframes floatingLight {
   0% {
-    transform: translate(-8%, -5%) rotate(0deg) scale(.95);
+    transform: translate(-7%, -4%) rotate(0deg) scale(.95);
     opacity: .65;
   }
 
   50% {
-    transform: translate(5%, 7%) rotate(8deg) scale(1.12);
+    transform: translate(4%, 6%) rotate(5deg) scale(1.08);
     opacity: 1;
   }
 
   100% {
-    transform: translate(10%, -4%) rotate(-5deg) scale(1.04);
-    opacity: .75;
+    transform: translate(9%, -3%) rotate(-4deg) scale(1.02);
+    opacity: .78;
   }
 }
 
@@ -1182,61 +1281,5 @@ footer {
     scroll-behavior: auto !important;
     animation-duration: .01ms !important;
     transition-duration: .01ms !important;
-  }
-  } 
-/* كوكبة نجوم خافتة */
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-
-  background:
-    /* نقاط النجوم */
-    radial-gradient(circle, #d6c6a9 1px, transparent 1.8px)
-      18% 24% / 100% 100% no-repeat,
-
-    radial-gradient(circle, #d6c6a9 1px, transparent 1.8px)
-      22% 29% / 100% 100% no-repeat,
-
-    radial-gradient(circle, #b8c5ca 1.2px, transparent 2px)
-      27% 27% / 100% 100% no-repeat,
-
-    radial-gradient(circle, #d6c6a9 1px, transparent 1.8px)
-      31% 35% / 100% 100% no-repeat,
-
-    radial-gradient(circle, #b8c5ca 1px, transparent 1.8px)
-      36% 33% / 100% 100% no-repeat,
-
-    /* خطوط رفيعة تصل النجوم */
-    linear-gradient(24deg, transparent 49.7%, rgba(190,170,140,.24) 50%, transparent 50.3%)
-      18% 24% / 9% 8% no-repeat,
-
-    linear-gradient(-12deg, transparent 49.7%, rgba(190,170,140,.20) 50%, transparent 50.3%)
-      27% 27% / 9% 8% no-repeat,
-
-    linear-gradient(35deg, transparent 49.7%, rgba(190,170,140,.20) 50%, transparent 50.3%)
-      31% 35% / 7% 7% no-repeat,
-
-    /* ضباب برونزي */
-    radial-gradient(ellipse at 30% 30%,
-      rgba(135, 103, 76, .12),
-      transparent 45%
-    );
-
-  opacity: .8;
-  animation: constellationDrift 28s ease-in-out infinite alternate;
-}
-
-@keyframes constellationDrift {
-  from {
-    transform: translate3d(0, 0, 0);
-    opacity: .55;
-  }
-  to {
-    transform: translate3d(1%, -1%, 0);
-    opacity: .9;
   }
 }

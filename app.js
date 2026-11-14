@@ -87,7 +87,6 @@
   function currentRoute() {
     const raw = (location.hash || "#/").replace(/^#/, "");
     const parts = raw.split("/").filter(Boolean).map(decodeURIComponent);
-
     if (!parts.length) return { page: "home" };
     if (parts[0] === "archive" && parts[1]) return { page: "category", id: parts[1] };
     if (parts[0] === "topic" && parts[1]) return { page: "topic", id: parts[1] };
@@ -97,7 +96,6 @@
     if (parts[0] === "archive") return { page: "archive" };
     if (parts[0] === "museum") return { page: "museum" };
     if (parts[0] === "admin") return { page: "admin" };
-
     return { page: "not-found" };
   }
 
@@ -140,7 +138,6 @@
     }
 
     const name = normalizeName(personName(person));
-
     return state.data.profiles.find((profile) =>
       normalizeName(profile.name ?? profile.title) === name
     );
@@ -155,7 +152,6 @@
 
     if (profileId) {
       const profile = findItem(state.data.profiles, profileId);
-
       if (profile) {
         return `<a class="topic-author" href="${profileLink(profile)}">بقلم: ${esc(itemTitle(profile))}</a>`;
       }
@@ -265,7 +261,12 @@
     return `${pageHeading(title, itemDescription(category))}
       <div class="card-grid">
         ${related.length
-          ? related.map((item) => `<article class="archive-topic-card">${card(item, "topic")}${topicAuthor(item)}</article>`).join("")
+          ? related.map((item) => `
+              <article class="archive-topic-card">
+                ${card(item, "topic")}
+                ${topicAuthor(item)}
+              </article>
+            `).join("")
           : emptyState("لا توجد موضوعات مدرجة في هذا القسم بعد.")}
       </div>`;
   }
@@ -299,8 +300,11 @@
 
     return `<article class="detail-page">
       ${pageHeading(itemTitle(item), text(item.date ?? item.published_at))}
+
       ${image ? `<img class="detail-image" src="${esc(image)}" alt="">` : ""}
+
       ${linkedProfile ? `<div class="detail-meta">${linkedProfile}</div>` : ""}
+
       <div class="detail-content">${esc(body).replace(/\n/g, "<br>")}</div>
 
       ${authoredTopics.length ? `
@@ -309,7 +313,8 @@
           <div class="card-grid">
             ${authoredTopics.map((entry) => card(entry, "topic")).join("")}
           </div>
-        </section>` : ""}
+        </section>
+      ` : ""}
 
       ${relatedAchievements.length ? `
         <section class="content-section">
@@ -318,8 +323,10 @@
             <div class="archive-card__body">
               <h3>${esc(itemTitle(entry))}</h3>
               <p>${esc(itemDescription(entry))}</p>
-            </div>`).join("")}
-        </section>` : ""}
+            </div>
+          `).join("")}
+        </section>
+      ` : ""}
 
       ${relatedResults.length ? `
         <section class="content-section">
@@ -330,15 +337,22 @@
               text(entry.profile_id ?? entry.winner_profile_id)
             );
 
-            return `<div class="archive-card__body">
-              <h3>${esc(itemTitle(entry))}</h3>
-              <p>${esc(itemDescription(entry))}</p>
-              ${winner ? `<a href="${profileLink(winner)}">${esc(itemTitle(winner))}</a>` : ""}
-            </div>`;
+            return `
+              <div class="archive-card__body">
+                <h3>${esc(itemTitle(entry))}</h3>
+                <p>${esc(itemDescription(entry))}</p>
+                ${winner
+                  ? `<a href="${profileLink(winner)}">${esc(itemTitle(winner))}</a>`
+                  : ""}
+              </div>
+            `;
           }).join("")}
-        </section>` : ""}
+        </section>
+      ` : ""}
 
-      ${linkedEvent ? `<p><a href="#/event/${encodeURIComponent(itemId(linkedEvent))}">الفعالية المرتبطة</a></p>` : ""}
+      ${linkedEvent
+        ? `<p><a href="#/event/${encodeURIComponent(itemId(linkedEvent))}">الفعالية المرتبطة</a></p>`
+        : ""}
     </article>`;
   }
 
@@ -365,9 +379,15 @@
         ];
 
     return `${pageHeading("المجلة", "إصدارات الآيدون وموادها المحفوظة.")}
+
       <div class="card-grid">
         ${items.length
-          ? items.map((item) => `<article class="archive-topic-card">${card(item, "topic")}${topicAuthor(item)}</article>`).join("")
+          ? items.map((item) => `
+              <article class="archive-topic-card">
+                ${card(item, "topic")}
+                ${topicAuthor(item)}
+              </article>
+            `).join("")
           : emptyState("لا توجد إصدارات منشورة حاليًا.")}
       </div>
 
@@ -380,12 +400,12 @@
 
             return profile
               ? `<a class="person-row" href="${profileLink(profile)}">
-                  <span class="person-name">${esc(name)}</span>
-                  <span class="arrow">←</span>
-                </a>`
+                   <span class="person-name">${esc(name)}</span>
+                   <span class="arrow">←</span>
+                 </a>`
               : `<div class="person-row">
-                  <span class="person-name">${esc(name)}</span>
-                </div>`;
+                   <span class="person-name">${esc(name)}</span>
+                 </div>`;
           }).join("")}
         </div>
       </section>`;
@@ -399,7 +419,9 @@
               const image = text(item.image_url ?? item.image);
 
               return `<article class="archive-card">
-                ${image ? `<div class="archive-card__image"><img src="${esc(image)}" alt="" loading="lazy"></div>` : ""}
+                ${image
+                  ? `<div class="archive-card__image"><img src="${esc(image)}" alt="" loading="lazy"></div>`
+                  : ""}
                 <div class="archive-card__body">
                   <h3>${esc(itemTitle(item))}</h3>
                   <p>${esc(itemDescription(item))}</p>
@@ -433,16 +455,16 @@
     return `${pageHeading("الملف الشخصي")}${emptyState("لم يُعثر على الملف المطلوب.")}`;
   }
 
+  // التعديل الأول: تشغيل لوحة الإدارة بالطريقة الصحيحة.
   let adminStarted = false;
 
   function renderAdmin() {
     if (!window.AdminPanel || typeof window.AdminPanel.start !== "function") {
       app.innerHTML = `${pageHeading("الإدارة")}
-        ${emptyState("تعذّر تحميل لوحة الإدارة. تأكدي من تحميل admin.js قبل app.js.")}`;
+        ${emptyState("لوحة الإدارة غير متاحة. تأكّد من تحميل ملف admin.js ثم أعد المحاولة.")}`;
       return;
     }
 
-    // admin.js renders inside #app; keep the header and main navigation untouched.
     if (!adminStarted) {
       adminStarted = true;
       window.AdminPanel.start();
@@ -458,18 +480,17 @@
       <a href="#/archive">الأرشيف</a>
       <a href="#/museum">المتحف</a>`;
 
-    nav.classList.toggle("is-open", state.menuOpen);
+    // التعديل الثاني: استخدام open المطابقة للـ CSS.
     nav.classList.toggle("open", state.menuOpen);
-
     menuButton?.setAttribute("aria-expanded", String(state.menuOpen));
   }
 
+  // التعديل الثالث: فحص مسار الإدارة قبل حالة التحميل والخطأ.
   function render() {
     renderNavigation();
 
     const route = currentRoute();
 
-    // Admin must work independently of the public-data request.
     if (route.page === "admin") {
       renderAdmin();
       return;
@@ -478,7 +499,7 @@
     adminStarted = false;
 
     if (state.loading) {
-      app.innerHTML = `<div class="loading-state">جارٍ تحميل أرشيف الآيدون…</div>`;
+      app.innerHTML = `<div class="loading">تُفتح صفحات الذاكرة...</div>`;
       return;
     }
 
@@ -486,7 +507,7 @@
       app.innerHTML = `${pageHeading("تعذّر تحميل الأرشيف")}
         <div class="error-state">
           <p>${esc(state.error)}</p>
-          <p>تحقّق من خدمة <code>/api/public</code> في الخادم؛ نشر ملفات الموقع وحده لا يشغّل واجهة API.</p>
+          <p>تحقّق من خدمة <code>/api/public</code> في الخادم.</p>
           <button class="button" id="retryButton" type="button">إعادة المحاولة</button>
         </div>`;
 
@@ -532,8 +553,7 @@
         break;
 
       default:
-        app.innerHTML = `${pageHeading("الصفحة غير موجودة")}
-          ${emptyState("الرابط الذي فتحته غير صالح أو لم يعد متاحًا.")}`;
+        app.innerHTML = `${pageHeading("الصفحة غير موجودة")}${emptyState("الرابط الذي فتحته غير صالح أو لم يعد متاحًا.")}`;
     }
   }
 
@@ -549,10 +569,6 @@
     }
   });
 
-  window.addEventListener("hashchange", () => {
-    state.menuOpen = false;
-    render();
-  });
-
+  window.addEventListener("hashchange", render);
   loadPublicData();
 })(); 

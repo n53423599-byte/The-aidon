@@ -495,15 +495,9 @@ function magazinePage() {
               const profile = getPersonProfile(person);
               const name = getPersonName(person);
 
-              const position =
-                typeof person === "object" ? person.position : "";
-
               const content = `
                 <div>
                   <div class="person-name">${escapeHTML(name)}</div>
-                  ${position
-                    ? `<div class="person-role">${escapeHTML(position)}</div>`
-                    : ""}
                 </div>
                 ${profile ? `<span class="arrow">←</span>` : ""}
               `;
@@ -1021,4 +1015,4 @@ async function start() {
   }
 }
 
-start();
+start(); 

@@ -30,6 +30,18 @@ window.AdminPanel = (() => {
       ]
     },
 
+    leadership: {
+      title: "العُليا",
+      table: "profiles",
+      fields: [
+        ["name", "الاسم", "text", true],
+        ["role", "الصفة في العُليا", "text", true],
+        ["image_key", "الصورة", "image"],
+        ["description", "التعريف", "textarea"],
+        ["extra_info", "معلومات إضافية", "textarea"]
+      ]
+    },
+
     journalists: {
       title: "الصحفيون",
       table: "journalists",
@@ -758,18 +770,25 @@ window.AdminPanel = (() => {
     if (section) renderRecords(section);
   }
 
-  function getRows(table) {
+  function getRows(table, sectionKey = "") {
     const map = {
       archive_categories: "categories",
       archive_topics: "topics"
     };
 
-    return state.data?.[map[table] || table] || [];
+    const rows = state.data?.[map[table] || table] || [];
+
+    if (sectionKey === "leadership") {
+      return rows.filter(person =>
+        /قائدة|نائب|مستشار/.test(person.role || "")
+      );
+    }
+
+    return rows;
   }
 
   /* =========================
      COMBINED TROPHY ADMIN
-     الجداول مستقلة في قاعدة البيانات
   ========================= */
 
   function renderTrophies() {
@@ -833,7 +852,11 @@ window.AdminPanel = (() => {
   function renderRecords(section, target = $("#admin-content")) {
     if (!target) return;
 
-    const rows = getRows(section.table);
+    const sectionKey = Object.keys(sections).find(
+      key => sections[key] === section
+    );
+
+    const rows = getRows(section.table, sectionKey);
 
     target.innerHTML = `
       <div class="admin-top">

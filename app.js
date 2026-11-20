@@ -321,24 +321,31 @@ function getLeadership() {
     ? [...leaders]
     : [...data.leadership];
 
-  // ضمان وجود كورومي في العُليا حتى إن غاب ملفها من البيانات.
-  const korumiExists = result.some(person =>
-    normalizeName(person.name) === normalizeName("كورومي 🎐")
+  const korumiName = normalizeName("كورومي 🎐");
+
+  const korumiProfile = findProfileByName("كورومي 🎐");
+
+  const existingKorumi = result.find(person =>
+    normalizeName(person.name) === korumiName
   );
 
-  if (!korumiExists) {
-    const korumiProfile = findProfileByName("كورومي 🎐");
+  // الاحتفاظ ببيانات كورومي الحقيقية إن وُجدت.
+  const korumi = korumiProfile || existingKorumi || {
+    id: "korumi",
+    name: "كورومي 🎐",
+    role: "قائدة الآيدون"
+  };
 
-    result.unshift(
-      korumiProfile || {
-        id: "korumi",
-        name: "كورومي 🎐",
-        role: "قائدة الآيدون"
-      }
-    );
-  }
+  // حذف أي تكرار لكورومي من بقية القائمة.
+  const otherLeaders = result.filter(person =>
+    normalizeName(person.name) !== korumiName
+  );
 
-  return sortByPosition(result);
+  // فرز بقية القيادات ثم وضع كورومي أولًا دائمًا.
+  return [
+    korumi,
+    ...sortByPosition(otherLeaders)
+  ];
 }
 
 /* دمج سجلات الفعاليات دون دمج الجداول */
@@ -532,13 +539,7 @@ function magazinePage() {
           <div class="accordion-content">
             ${leaders.map(person => {
               const profile = findProfile(person.id) ||
-                findProfileByName(person.name) ||
-                (normalizeName(person.name) === normalizeName("كورومي 🎐")
-                  ? {
-                      ...person,
-                      id: "korumi"
-                    }
-                  : null);
+                findProfileByName(person.name);
 
               const image = getImageSource(person) ||
                 getImageSource(profile);
@@ -894,17 +895,8 @@ function profilePage(id) {
     normalizeName(person.name) === normalizeName(id)
   );
 
-  // ملف افتراضي لكورومي إذا لم يرجعه الخادم بعد.
-  const korumiProfile = !profile &&
-    (id === "korumi" || normalizeName(id) === normalizeName("كورومي 🎐"))
-      ? {
-          id: "korumi",
-          name: "كورومي 🎐",
-          role: "قائدة الآيدون"
-        }
-      : null;
-
-  const selectedProfile = profile || korumiProfile;
+  // لا يُنشأ ملف وهمي؛ نعرض الملفات الموجودة فعلًا فقط.
+  const selectedProfile = profile;
 
   if (!selectedProfile) {
     notFound();
@@ -1117,4 +1109,4 @@ async function start() {
   }
 }
 
-start();
+start(); 

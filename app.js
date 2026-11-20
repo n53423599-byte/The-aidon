@@ -42,7 +42,7 @@ const defaultData = {
   },
 
   leadership: [
-    { name: "كورومي 🎐", role: "قائدة الآيدون" },
+    { id: "korumi", name: "كورومي 🎐", role: "قائدة الآيدون" },
     { name: "ساسكي ⚡", role: "نائب الآيدون" },
     { name: "فورينا 🎐", role: "مستشارة الآيدون" }
   ],
@@ -106,7 +106,7 @@ function escapeHTML(value = "") {
 }
 
 function safeImage(value = "") {
-  const url = String(value).trim();
+  const url = String(value || "").trim();
 
   if (url.startsWith("/") && !url.startsWith("//")) {
     return escapeHTML(url);
@@ -126,6 +126,21 @@ function safeImage(value = "") {
   }
 
   return "";
+}
+
+/* دعم حقول الصور المختلفة */
+
+function getImageSource(item) {
+  if (!item) return "";
+
+  return (
+    item.image_key ||
+    item.image_url ||
+    item.image ||
+    item.cover_url ||
+    item.photo ||
+    ""
+  );
 }
 
 function renderImage(image, alt = "", className = "") {
@@ -295,6 +310,37 @@ function getPersonProfile(person) {
   return findProfileByName(person);
 }
 
+/* ملفات العُليا */
+
+function getLeadership() {
+  const leaders = data.profiles.filter(person =>
+    /قائدة|نائب|مستشار/.test(person.role || "")
+  );
+
+  const result = leaders.length
+    ? [...leaders]
+    : [...data.leadership];
+
+  // ضمان وجود كورومي في العُليا حتى إن غاب ملفها من البيانات.
+  const korumiExists = result.some(person =>
+    normalizeName(person.name) === normalizeName("كورومي 🎐")
+  );
+
+  if (!korumiExists) {
+    const korumiProfile = findProfileByName("كورومي 🎐");
+
+    result.unshift(
+      korumiProfile || {
+        id: "korumi",
+        name: "كورومي 🎐",
+        role: "قائدة الآيدون"
+      }
+    );
+  }
+
+  return sortByPosition(result);
+}
+
 /* دمج سجلات الفعاليات دون دمج الجداول */
 
 function getCombinedEventRecords(eventId) {
@@ -423,20 +469,6 @@ async function loadData() {
   }
 }
 
-/* القيادات */
-
-function getLeadership() {
-  const profiles = data.profiles || [];
-
-  const leaders = profiles.filter(person =>
-    /قائدة|نائب|مستشار/.test(person.role || "")
-  );
-
-  return sortByPosition(
-    leaders.length ? leaders : data.leadership
-  );
-}
-
 /* الصفحة الرئيسية */
 
 function homePage() {
@@ -495,15 +527,24 @@ function magazinePage() {
     <div class="accordion-list">
 
       ${leaders.length ? `
-        <details class="accordion">
+        <details class="accordion" open>
           <summary>العُليا</summary>
           <div class="accordion-content">
             ${leaders.map(person => {
               const profile = findProfile(person.id) ||
-                findProfileByName(person.name);
+                findProfileByName(person.name) ||
+                (normalizeName(person.name) === normalizeName("كورومي 🎐")
+                  ? {
+                      ...person,
+                      id: "korumi"
+                    }
+                  : null);
+
+              const image = getImageSource(person) ||
+                getImageSource(profile);
 
               const content = `
-                ${renderImage(person.image_key, person.name)}
+                ${renderImage(image, person.name, "leader-image")}
                 <div>
                   <div class="person-name">${escapeHTML(person.name)}</div>
                   ${person.role
@@ -566,26 +607,28 @@ function magazinePage() {
   `;
 }
 
+/* الإنجازات — العنوان في البداية والرقم في النهاية */
+
 function renderMagazineAchievements(items = []) {
   items = sortByPosition(items);
 
   if (!items.length) return "";
 
   return items.map(item => `
-    <div class="simple-row">
-      ${renderImage(item.image_key, item.title)}
-      <div>
+    <div class="simple-row achievement-row">
+      <div class="simple-row-title">
+        ${renderImage(getImageSource(item), item.title)}
         <strong>${escapeHTML(item.title || "")}</strong>
-        ${item.description
-          ? `<p>${escapeHTML(item.description)}</p>`
-          : ""}
-        ${item.war_number
-          ? `<span>${escapeHTML(item.war_number)}</span>`
-          : ""}
       </div>
+
+      ${item.war_number
+        ? `<span class="simple-row-value">${escapeHTML(item.war_number)}</span>`
+        : ""}
     </div>
   `).join("");
 }
+
+/* الإحصائيات — العنوان في البداية والقيمة في النهاية */
 
 function renderStatistics(items = []) {
   items = sortByPosition(items);
@@ -593,15 +636,15 @@ function renderStatistics(items = []) {
   if (!items.length) return "";
 
   return items.map(item => `
-    <div class="simple-row">
-      ${renderImage(item.image_key, item.title)}
-      <div>
+    <div class="simple-row statistics-row">
+      <div class="simple-row-title">
+        ${renderImage(getImageSource(item), item.title)}
         <span>${escapeHTML(item.title || "")}</span>
-        <strong>${escapeHTML(item.value ?? "")}</strong>
-        ${item.description
-          ? `<p>${escapeHTML(item.description)}</p>`
-          : ""}
       </div>
+
+      <strong class="simple-row-value">
+        ${escapeHTML(item.value ?? "")}
+      </strong>
     </div>
   `).join("");
 }
@@ -731,7 +774,7 @@ function topicPage(id) {
       ${byline}
 
       ${renderImage(
-        topic.image_key || topic.image_url,
+        getImageSource(topic),
         topic.title,
         "topic-image"
       )}
@@ -759,7 +802,7 @@ function museumPage() {
         ? events.map(event => `
           <a class="nav-item" href="${getEventLink(event)}">
             <div>
-              ${renderImage(event.image_key, event.title)}
+              ${renderImage(getImageSource(event), event.title)}
               <h3>${escapeHTML(event.title || "")}</h3>
               ${event.subtitle
                 ? `<p>${escapeHTML(event.subtitle)}</p>`
@@ -792,7 +835,7 @@ function renderEventRecords(records) {
         ].filter(Boolean).join(" — ");
 
         const content = `
-          ${renderImage(item.image_key, item.title)}
+          ${renderImage(getImageSource(item), item.title)}
           <div>
             <h3>${escapeHTML(item.title || "")}</h3>
             ${description
@@ -824,7 +867,7 @@ function eventPage(id) {
     ${pageHeader(event.title, event.subtitle || "")}
 
     ${renderImage(
-      event.image_key,
+      getImageSource(event),
       event.title,
       "event-image"
     )}
@@ -851,43 +894,55 @@ function profilePage(id) {
     normalizeName(person.name) === normalizeName(id)
   );
 
-  if (!profile) {
+  // ملف افتراضي لكورومي إذا لم يرجعه الخادم بعد.
+  const korumiProfile = !profile &&
+    (id === "korumi" || normalizeName(id) === normalizeName("كورومي 🎐"))
+      ? {
+          id: "korumi",
+          name: "كورومي 🎐",
+          role: "قائدة الآيدون"
+        }
+      : null;
+
+  const selectedProfile = profile || korumiProfile;
+
+  if (!selectedProfile) {
     notFound();
     return;
   }
 
   const authoredTopics = sortByPosition(data.topics.filter(topic =>
-    String(topic.journalist_profile_id) === String(profile.id) ||
+    String(topic.journalist_profile_id) === String(selectedProfile.id) ||
     (
       !topic.journalist_profile_id &&
       normalizeName(topic.journalist_title) ===
-        normalizeName(profile.name)
+        normalizeName(selectedProfile.name)
     )
   ));
 
-  const trophies = getProfileTrophies(profile.id);
+  const trophies = getProfileTrophies(selectedProfile.id);
 
   app.innerHTML = `
     ${pageHeader("من أصحاب الأثر")}
 
     <div class="profile-header">
-      ${renderImage(profile.image_key, profile.name)}
+      ${renderImage(getImageSource(selectedProfile), selectedProfile.name)}
       <div>
-        <h2>${escapeHTML(profile.name || "")}</h2>
-        ${profile.role
-          ? `<p>${escapeHTML(profile.role)}</p>`
+        <h2>${escapeHTML(selectedProfile.name || "")}</h2>
+        ${selectedProfile.role
+          ? `<p>${escapeHTML(selectedProfile.role)}</p>`
           : ""}
       </div>
     </div>
 
-    ${profile.description
+    ${selectedProfile.description
       ? `<p class="profile-description">
-           ${escapeHTML(profile.description)}
+           ${escapeHTML(selectedProfile.description)}
          </p>`
       : ""}
 
-    ${profile.extra_info
-      ? `<div class="simple-row">${escapeHTML(profile.extra_info)}</div>`
+    ${selectedProfile.extra_info
+      ? `<div class="simple-row">${escapeHTML(selectedProfile.extra_info)}</div>`
       : ""}
 
     ${authoredTopics.length ? `
@@ -918,7 +973,7 @@ function profilePage(id) {
           return row(
             item.title,
             item.description || (event ? event.title : ""),
-            event ? getEventLink(event) : getProfileLink(profile)
+            event ? getEventLink(event) : getProfileLink(selectedProfile)
           );
         }).join("")}
       </div>
@@ -1062,4 +1117,4 @@ async function start() {
   }
 }
 
-start(); 
+start();

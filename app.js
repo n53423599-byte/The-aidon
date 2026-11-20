@@ -8,7 +8,7 @@ const app = document.getElementById("app");
 const nav = document.getElementById("mainNav");
 const menuButton = document.getElementById("menuButton");
 
-/* إخفاء الإدارة من القائمة الجانبية فقط */
+/* إخفاء الإدارة من الجانبية فقط */
 
 function removeAdminFromMenu() {
   if (!nav) return;

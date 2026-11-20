@@ -329,19 +329,16 @@ function getLeadership() {
     normalizeName(person.name) === korumiName
   );
 
-  // الاحتفاظ ببيانات كورومي الحقيقية إن وُجدت.
   const korumi = korumiProfile || existingKorumi || {
     id: "korumi",
     name: "كورومي 🎐",
     role: "قائدة الآيدون"
   };
 
-  // حذف أي تكرار لكورومي من بقية القائمة.
   const otherLeaders = result.filter(person =>
     normalizeName(person.name) !== korumiName
   );
 
-  // فرز بقية القيادات ثم وضع كورومي أولًا دائمًا.
   return [
     korumi,
     ...sortByPosition(otherLeaders)
@@ -538,16 +535,30 @@ function magazinePage() {
           <summary>العُليا</summary>
           <div class="accordion-content">
             ${leaders.map(person => {
-              const profile = findProfile(person.id) ||
-                findProfileByName(person.name);
+              const name = getPersonName(person);
+              const normalized = normalizeName(name);
+
+              // الأسماء المسموح بربطها فقط.
+              const allowedNames = [
+                normalizeName("كورومي 🎐"),
+                normalizeName("ساسكي ⚡"),
+                normalizeName("فورينا 🎐")
+              ];
+
+              const isAllowed = allowedNames.includes(normalized);
+
+              // لا نبحث عن الملف بالاسم، بل بالمعرّف الصريح فقط.
+              const profile = isAllowed
+                ? findProfile(person.profile_id || person.id)
+                : null;
 
               const image = getImageSource(person) ||
-                getImageSource(profile);
+                (profile ? getImageSource(profile) : "");
 
               const content = `
-                ${renderImage(image, person.name, "leader-image")}
+                ${renderImage(image, name, "leader-image")}
                 <div>
-                  <div class="person-name">${escapeHTML(person.name)}</div>
+                  <div class="person-name">${escapeHTML(name)}</div>
                   ${person.role
                     ? `<div class="person-role">${escapeHTML(person.role)}</div>`
                     : ""}
@@ -895,7 +906,6 @@ function profilePage(id) {
     normalizeName(person.name) === normalizeName(id)
   );
 
-  // لا يُنشأ ملف وهمي؛ نعرض الملفات الموجودة فعلًا فقط.
   const selectedProfile = profile;
 
   if (!selectedProfile) {
